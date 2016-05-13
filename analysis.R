@@ -2,6 +2,8 @@ library(tm)
 library(SnowballC)
 library(ggplot2)  
 library(wordcloud) 
+library(cluster)   
+library(fpc) 
 
 
 fetch_capstone_data <- function() {
@@ -106,6 +108,27 @@ plot_wordcloud <- function(dtm) {
   freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)
   set.seed(142)   
   wordcloud(names(freq), freq, min.freq=10, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))  
+}
+
+plot_wordcloud_top_n <- function(dtm, max.words=15) {
+  freq <- sort(colSums(as.matrix(dtm)), decreasing = TRUE)
+  set.seed(142)   
+  dark2 <- brewer.pal(6, "Dark2")   
+  wordcloud(names(freq), freq, max.words=max.words, rot.per=0.2, colors=dark2)  
+}
+
+hierarchical_cluster <- function(dtm) {
+  d <- dist(t(dtm), method="euclidian")   
+  fit <- hclust(d=d, method="ward")   
+  fit
+  
+  plot(fit, hang=-1)   
+}
+
+kmeans_plot <- function(dtm) {
+  d <- dist(t(dtm), method="euclidian")   
+  kfit <- kmeans(d, 2)   
+  clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)   
 }
 
 # test code 
