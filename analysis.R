@@ -1,5 +1,8 @@
 library(tm)
 library(SnowballC)
+library(ggplot2)  
+library(wordcloud) 
+
 
 fetch_capstone_data <- function() {
   data_dir = "./data"
@@ -44,16 +47,65 @@ newline_text_file_to_corpus <- function(filename,
   t_corpus
 }
 
-load_all_data <- function() {
-  tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.twitter.txt")
+load_all_data <- function(nlines=10) {
+  tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.twitter.txt",
+                                        nlines=nlines)
+  tweets <- preprocess_entries(tweets)
   tweets <- add_meta_data_to_docs(tweets, "doc_type", "twitter")
-  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.blogs.txt")
+  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.blogs.txt",
+                                       nlines=nlines)
+  blogs <- preprocess_entries(blogs)
   blogs <- add_meta_data_to_docs(blogs, "doc_type", "blog")
-  news <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.news.txt")
+  news <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.news.txt",
+                                      nlines=nlines)
   news <- add_meta_data_to_docs(news, "doc_type", "news")
+  news <- preprocess_entries(blogs)
+  docs <- c(tweets, blogs, news)
+  docs
+}
+
+preprocess_entries <- function(docs) {
+  docs <- tm_map(docs, removePunctuation)   # *Removing punctuation:*    
+  docs <- tm_map(docs, removeNumbers)      # *Removing numbers:*    
+  docs <- tm_map(docs, tolower)   # *Converting to lowercase:*    
+  docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
+  docs <- tm_map(docs, stemDocument)   # *Removing common word endings* (e.g., "ing", "es")   
+  docs <- tm_map(docs, stripWhitespace)   # *Stripping whitespace   
+  docs <- tm_map(docs, PlainTextDocument)  
+  docs
+}
+
+explore_data <- function(docs) {
+  dtm <- DocumentTermMatrix(docs)
+  print("Using findFreqTerms")
+  print(findFreqTerms(dtm, lowfreq=20))
+  freq <- colSums(as.matrix(dtm))
+  ord <- order(freq) 
+  print("most frequent")
+  print(freq[tail(ord, n=10)])
   
-  corpus <- c(tweets, blogs, news)
-  corpus
+
+  # dtms <- removeSparseTerms(dtm, 0.01)
+}
+
+plot_word_frequencies <- function(dtm) {
+  print("using colsums/head")
+  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)   
+  head(freq, 14) 
+  wf <- data.frame(word=names(freq), freq=freq)   
+  print(head(wf)) 
+  
+  p <- ggplot(subset(wf, freq>15), aes(word, freq))    
+  p <- p + geom_bar(stat="identity")   
+  p <- p + theme(axis.text.x=element_text(angle=45, hjust=1))   
+  p
+}
+
+plot_wordcloud <- function(dtm) {
+  
+  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)
+  set.seed(142)   
+  wordcloud(names(freq), freq, min.freq=10, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))  
 }
 
 # test code 
