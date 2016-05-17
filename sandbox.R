@@ -5,6 +5,7 @@ library(wordcloud)
 library(cluster)   
 library(fpc) 
 
+
 fetch_capstone_data <- function() {
   data_dir = "./data"
   zipfile <- file.path("data", "Coursera-SwiftKey.zip")
@@ -65,12 +66,6 @@ load_all_data <- function(nlines=10) {
   docs
 }
 
-remove_profanity <- function(docs) {
-  profanity <- read.csv("data/profanity.txt", header=FALSE, stringsAsFactors=FALSE)
-  profanity <- profanity$V1
-  docs <- tm_map(docs, removeWords, profanity)
-}
-
 preprocess_entries <- function(docs) {
   docs <- tm_map(docs, removePunctuation)   # *Removing punctuation:*    
   docs <- tm_map(docs, removeNumbers)      # *Removing numbers:*    
@@ -82,7 +77,7 @@ preprocess_entries <- function(docs) {
   docs
 }
 
-get_docterm_matrix <- function(docs, remove_sparse=FALSE) {
+explore_data <- function(docs) {
   dtm <- DocumentTermMatrix(docs)
   print("Using findFreqTerms")
   print(findFreqTerms(dtm, lowfreq=20))
@@ -90,11 +85,8 @@ get_docterm_matrix <- function(docs, remove_sparse=FALSE) {
   ord <- order(freq) 
   print("most frequent")
   print(freq[tail(ord, n=10)])
-  print("Returning a document by term matrix")
   
-  dtms <- removeSparseTerms(dtm, 0.01)
-  
-  list(full=dtm, sparse=dtms)
+  # dtms <- removeSparseTerms(dtm, 0.01)
 }
 
 plot_word_frequencies <- function(dtm) {
@@ -137,3 +129,74 @@ kmeans_plot <- function(dtm) {
   kfit <- kmeans(d, 2)   
   clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)   
 }
+
+# test code 
+test_read_tweets <- function() {
+  lines <- scan(file="./data/final/en_US/en_US.twitter.txt", what="", sep="\n", nlines = 10)
+  # only the first 10 lines
+  t_corpus <- Corpus(VectorSource(lines))
+  t_corpus[[1]]$content
+  
+  # stemming
+  t_corpus <- tm_map(t_corpus, stemDocument)
+  t_corpus[[1]]$content
+  # "How are you? Btw thank for the RT. You gonna be in DC anytim soon? Love to see you. Been way, way too long."
+
+  # lower case 
+  t_corpus <- tm_map(t_corpus, tolower)
+  t_corpus[[1]]
+  
+  # grep/search
+  tm_filter(t_corpus, 
+            FUN = function(x) any(grep("RT", content(x))))[[1]]$content
+  
+  # document term matrix
+  dtm <- DocumentTermMatrix(t_corpus)
+  inspect(dtm)
+  
+  # dictionary
+
+}
+
+test_reuters <- function() {
+  # dictionary
+  reut21578 <- system.file("texts", "crude", package = "tm")
+  reuters <- VCorpus(DirSource(reut21578),
+                     readerControl = list(reader = readReut21578XMLasPlain))
+  inspect(DocumentTermMatrix(reuters,
+                             list(dictionary = c("prices", "crude", "oil"))))
+}
+
+
+
+# quiz #1
+
+find_longest_line <- function(){
+  max(sapply(readLines("./data/final/en_US/en_US.twitter.txt"), nchar))
+  max(sapply(readLines("./data/final/en_US/en_US.blogs.txt"), nchar))
+  max(sapply(readLines("./data/final/en_US/en_US.news.txt"), nchar))
+}
+
+twitter_word_count_love_hate <- function() {
+  # lines <- scan(file="./data/final/en_US/en_US.twitter.txt", what="", sep="\n")
+  lines <- readLines("./data/final/en_US/en_US.twitter.txt")
+  t_corpus <- Corpus(VectorSource(lines))
+  t_corpus <- tm_map(t_corpus, tolower)
+  t_corpus <- tm_map(t_corpus, PlainTextDocument)
+  has_love <- tm_filter(t_corpus, 
+                        FUN = function(x) any(grep("love", content(x))))
+  has_hate <- tm_filter(t_corpus, 
+                        FUN = function(x) any(grep("hate", content(x))))
+  length(has_love) / length(has_hate)
+  
+  # has biostats
+  has_love <- tm_filter(t_corpus, 
+                        FUN = function(x) any(grep("biostats", content(x))))[[1]]$content
+  
+}
+
+# twitter_word_count_phrase <- function() {
+#   
+# }
+
+
