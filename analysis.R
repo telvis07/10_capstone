@@ -3,7 +3,8 @@ library(SnowballC)
 library(ggplot2)  
 library(wordcloud) 
 library(cluster)   
-library(fpc) 
+library(fpc)
+library(RWeka)
 
 fetch_capstone_data <- function() {
   data_dir = "./data"
@@ -69,32 +70,72 @@ remove_profanity <- function(docs) {
   profanity <- read.csv("data/profanity.txt", header=FALSE, stringsAsFactors=FALSE)
   profanity <- profanity$V1
   docs <- tm_map(docs, removeWords, profanity)
-}
-
-preprocess_entries <- function(docs) {
-  docs <- tm_map(docs, removePunctuation)   # *Removing punctuation:*    
-  docs <- tm_map(docs, removeNumbers)      # *Removing numbers:*    
-  docs <- tm_map(docs, tolower)   # *Converting to lowercase:*    
-  docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
-  docs <- tm_map(docs, stemDocument)   # *Removing common word endings* (e.g., "ing", "es")   
-  docs <- tm_map(docs, stripWhitespace)   # *Stripping whitespace   
-  docs <- tm_map(docs, PlainTextDocument)  
   docs
 }
 
-get_docterm_matrix <- function(docs, remove_sparse=FALSE) {
-  dtm <- DocumentTermMatrix(docs)
-  print("Using findFreqTerms")
-  print(findFreqTerms(dtm, lowfreq=20))
+preprocess_entries <- function(docs, save_file="data/preprocessed_corpus.rds") {
+  
+  options(mc.cores=4)
+  
+  print("remove punctuation")
+  print(system.time({docs <- tm_map(docs, removePunctuation)}))   # *Removing punctuation:*  
+  
+  print("removeNumbers")
+  print(system.time({docs <- tm_map(docs, removeNumbers)}))      # *Removing numbers:* 
+  
+  print("tolower")
+  print(system.time({docs <- tm_map(docs, content_transformer(tolower))}))   # *Converting to lowercase:* 
+  
+  print("removeWords")
+  print(system.time({docs <- tm_map(docs, removeWords, stopwords("english"))}))   # *Removing "stopwords" 
+  
+  print("stripWhitespace")
+  print(system.time({docs <- tm_map(docs, stripWhitespace)}))   # *Stripping whitespace
+  
+  print("remove profanity")
+  print(system.time({docs <- remove_profanity(docs)}))
+  
+  # print("PlainTextDocument")
+  # print(system.time({docs <- tm_map(docs, PlainTextDocument)}))
+  
+  print(sprintf("Saving processed docs to %s", save_file))
+  saveRDS(docs, save_file)
+  docs
+}
+
+get_docterm_matrix <- function(docs, 
+                               ngram_length=1,
+                               save_file="data/term_doc_matrix_%s_ngram.rds") {
+  
+  save_file <- sprintf(save_file, ngram_length)
+  printf(sprintf("Save file is %s", save_file))
+  tokenizer <- function(x) {
+    NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
+  }
+  
+  if (ngram_length > 1) {
+    system.time({dtm <- DocumentTermMatrix(docs, control = list(
+      tokenize=tokenizer
+    ))})
+  } else {
+    print("Generating term/doc matrix")
+    system.time({dtm <- DocumentTermMatrix(docs)})
+  }
+
+  print(sprintf("Saving docterm matrix to %s", save_file))
+  saveRDS(dtm, save_file)
+  
+  print("Most frequent words")
   freq <- colSums(as.matrix(dtm))
-  ord <- order(freq) 
-  print("most frequent")
-  print(freq[tail(ord, n=10)])
-  print("Returning a document by term matrix")
+  freq <- sort(freq, decreasing=TRUE)
+  wf <- data.frame(word=names(freq), freq=freq)
+  print(head(wf))
   
-  dtms <- removeSparseTerms(dtm, 0.01)
+  dtm
   
-  list(full=dtm, sparse=dtms)
+  # sparse_filter=0.05
+  # dtms <- removeSparseTerms(dtm, 0.01)
+  # list(full=dtm, sparse=dtms)
 }
 
 plot_word_frequencies <- function(dtm) {
