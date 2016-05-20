@@ -3,8 +3,13 @@ library(SnowballC)
 library(ggplot2)  
 library(wordcloud) 
 library(cluster)   
-library(fpc)
+# library(fpc)
 library(RWeka)
+library(timeit)
+library(ngram)
+library(tau)
+
+# setwd("/Users/telvis/work/datasciencecoursera/10_capstone")
 
 fetch_capstone_data <- function() {
   data_dir = "./data"
@@ -103,23 +108,39 @@ preprocess_entries <- function(docs, save_file="data/preprocessed_corpus.rds") {
   docs
 }
 
+do_system.time <- function(what, args){
+  tmp <- system.time({
+      ret = do.call(what, args)
+    })
+  print(tmp)
+  ret
+}
+
 get_docterm_matrix <- function(docs, 
                                ngram_length=1,
                                save_file="data/term_doc_matrix_%s_ngram.rds") {
   
   save_file <- sprintf(save_file, ngram_length)
-  printf(sprintf("Save file is %s", save_file))
+  print(sprintf("Save file is %s", save_file))
+  options(mc.cores=1)
+  
   tokenizer <- function(x) {
+    print(x)
+    # ngram::ngram_asweka(content(x), min=ngram_length, max=ngram_length)
+    # ngram(content(x), n=ngram_length)
+    # rownames(as.data.frame(unclass(textcnt(content(x),method="string",n=ngram_length))))
     NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
   }
   
   if (ngram_length > 1) {
-    system.time({dtm <- DocumentTermMatrix(docs, control = list(
-      tokenize=tokenizer
-    ))})
+    tmp <- system.time({
+      dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
+    })
+    print(tmp)
   } else {
     print("Generating term/doc matrix")
-    system.time({dtm <- DocumentTermMatrix(docs)})
+    tmp <- system.time({dtm <- DocumentTermMatrix(docs)})
+    print(tmp)
   }
 
   print(sprintf("Saving docterm matrix to %s", save_file))
