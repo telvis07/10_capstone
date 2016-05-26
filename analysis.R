@@ -118,38 +118,48 @@ do_system.time <- function(what, args){
 
 get_docterm_matrix <- function(docs, 
                                ngram_length=1,
-                               save_file="data/term_doc_matrix_%s_ngram.rds") {
+                               save_file="data/term_doc_matrix_%s_ngram.rds",
+                               save_file_df="data/term_doc_matrix_%s_ngram_df.rds") {
   
   save_file <- sprintf(save_file, ngram_length)
-  print(sprintf("Save file is %s", save_file))
+  save_file_df <- sprintf(save_file_df, ngram_length)
+  # print("convert to data frame")
+  # tmp <- system.time ({
+  #   docs_df <- data.frame(text=unlist(sapply(docs, '[',"content")),stringsAsFactors=F)
+  # })
+  # print(tmp)
   options(mc.cores=1)
   
   tokenizer <- function(x) {
-    print(x)
+    # print(x)
     # ngram::ngram_asweka(content(x), min=ngram_length, max=ngram_length)
     # ngram(content(x), n=ngram_length)
     # rownames(as.data.frame(unclass(textcnt(content(x),method="string",n=ngram_length))))
     NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
   }
-  
   if (ngram_length > 1) {
+    print("Generating doc/term matrix")
     tmp <- system.time({
       dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
     })
     print(tmp)
   } else {
-    print("Generating term/doc matrix")
+    print("Generating doc/term matrix")
     tmp <- system.time({dtm <- DocumentTermMatrix(docs)})
     print(tmp)
   }
 
   print(sprintf("Saving docterm matrix to %s", save_file))
   saveRDS(dtm, save_file)
-  
+
   print("Most frequent words")
   freq <- colSums(as.matrix(dtm))
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
+  
+  print(sprintf("Saving docterm data frame to %s", save_file_df))
+  saveRDS(wf, save_file_df)
+  
   print(head(wf))
   
   dtm

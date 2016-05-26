@@ -195,6 +195,13 @@ twitter_word_count_love_hate <- function() {
   
 }
 
+hacking_with_weka <- function() {
+  NGramTokenizer("a b a c a b b", Weka_control(min = 2, max = 2))
+  NGramTokenizer(PlainTextDocument("a b a c a b b"), Weka_control(min = 2, max = 2))
+  PlainTextDocument("a b a c a b b")
+  content(PlainTextDocument("a b a c a b b"))
+}
+
 # twitter_word_count_phrase <- function() {
 #   
 # }
