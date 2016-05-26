@@ -1,15 +1,14 @@
-workdir = 
+rm(list=ls())
+setwd('/Users/telvis/work/datasciencecoursera/10_capstone')
 
 reinit_environment <- function() {
   tmp = system.time({
-    rm(list=ls())
-    setwd('/Users/telvis/work/datasciencecoursera/10_capstone')
+    
     
     datums = list()
     datums$df_ngram_2 <- readRDS("data/term_doc_matrix_2_ngram_df.rds")
     # datums.df_ngram_3 <- readRDS("data/term_doc_matrix_3_ngram_df.rds")
     # datums.df_ngram_4 <- readRDS("data/term_doc_matrix_4_ngram_df.rds")
-    print(lsos())
   })
   print(tmp)
   datums
@@ -45,3 +44,7 @@ reinit_environment <- function() {
 lsos <- function(..., n=10) {
   .ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n)
 }
+
+
+datums <- reinit_environment()
+print(lsos())

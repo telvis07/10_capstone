@@ -56,3 +56,13 @@ explore_ngram_data <- function(df=NULL, ngram_length=2) {
   #           1           2           3           4           5           6 
   # 0.939112054 0.039699598 0.009700753 0.004048329 0.002122727 0.001276024 
 }
+
+cover_percentage <- function(df) {
+  # 3. How many unique words do you need in a frequency sorted dictionary 
+  # to cover 50% of all word instances in the language? 90%?
+  sums <- cumsum(df$freq)
+  cover_50 <- which(sums > sum(df$freq) * .50)[1]
+  print(sprintf("%s of %s (%s%%) cover 50%% of word instances", cover_50, nrow(df), cover_50/nrow(df)*100))
+  cover_90 <- which(sums > sum(df$freq) * .90)[1]
+  print(sprintf("%s of %s (%s%%) cover 90%% of word instances", cover_90, nrow(df), cover_90/nrow(df)*100))
+}
