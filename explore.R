@@ -65,4 +65,63 @@ cover_percentage <- function(df) {
   print(sprintf("%s of %s (%s%%) cover 50%% of word instances", cover_50, nrow(df), cover_50/nrow(df)*100))
   cover_90 <- which(sums > sum(df$freq) * .90)[1]
   print(sprintf("%s of %s (%s%%) cover 90%% of word instances", cover_90, nrow(df), cover_90/nrow(df)*100))
+  
+  # > cover_percentage(datums$df_ngram_2)
+  # [1] "1137868 of 20514021 (5.54678188152386%) cover 50% of word instances"
+  # [1] "15313787 of 20514021 (74.6503428070001%) cover 90% of word instances"
+  #                        Type       Size    PrettySize Rows Columns
+  # datums                 list 3071531248  [1] "2.9 Gb"    1      NA
+  
+  
+  # > cover_percentage(datums$df_ngram_3)
+  # [1] "17793995 of 41719440 (42.6515672310079%) cover 50% of word instances"
+  # [1] "36934351 of 41719440 (88.5303134462016%) cover 90% of word instances"
+  # datums                    list 6988597936  [1] "6.5 Gb"    1      NA
+  
+  # > cover_percentage(datums$df_ngram_4)
+  # [1] "20568337 of 42556490 (48.3318455069955%) cover 50% of word instances"
+  # [1] "38158860 of 42556490 (89.6663705112898%) cover 90% of word instances"
+  #                           Type       Size    PrettySize Rows Columns
+  # datums                    list 7545601208    [1] "7 Gb"    1      NA
+}
+
+
+plot_word_frequencies <- function(dtm) {
+  print("using colsums/head")
+  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)   
+  head(freq, 14) 
+  wf <- data.frame(word=names(freq), freq=freq)   
+  print(head(wf)) 
+  
+  p <- ggplot(subset(wf, freq>15), aes(word, freq))    
+  p <- p + geom_bar(stat="identity")   
+  p <- p + theme(axis.text.x=element_text(angle=45, hjust=1))   
+  p
+}
+
+plot_wordcloud <- function(dtm) {
+  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)
+  set.seed(142)   
+  wordcloud(names(freq), freq, min.freq=10, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))  
+}
+
+plot_wordcloud_top_n <- function(dtm, max.words=15) {
+  freq <- sort(colSums(as.matrix(dtm)), decreasing = TRUE)
+  set.seed(142)   
+  dark2 <- brewer.pal(6, "Dark2")   
+  wordcloud(names(freq), freq, max.words=max.words, rot.per=0.2, colors=dark2)  
+}
+
+hierarchical_cluster <- function(dtm) {
+  d <- dist(t(dtm), method="euclidian")   
+  fit <- hclust(d=d, method="ward")   
+  fit
+  
+  plot(fit, hang=-1)   
+}
+
+kmeans_plot <- function(dtm) {
+  d <- dist(t(dtm), method="euclidian")   
+  kfit <- kmeans(d, 2)   
+  clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)   
 }

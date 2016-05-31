@@ -169,43 +169,17 @@ get_docterm_matrix <- function(docs,
   # list(full=dtm, sparse=dtms)
 }
 
-plot_word_frequencies <- function(dtm) {
-  print("using colsums/head")
-  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)   
-  head(freq, 14) 
-  wf <- data.frame(word=names(freq), freq=freq)   
-  print(head(wf)) 
+prune_ngram_df_by_cover_percentage <- function(df, save_file, percentage) {
+  # prune_ngram_df_by_cover_percentage(datums$df_ngram_4, "data/pruned_50p_term_doc_matrix_4_ngram_df.rds", .50)
+  sums <- cumsum(df$freq)
+  cover <- which(sums > sum(df$freq) * percentage)[1]
+  print(sprintf("%s of %s (%s%%) cover %s%% of word instances", 
+                cover, 
+                nrow(df), 
+                cover/nrow(df)*100,
+                percentage*100))
   
-  p <- ggplot(subset(wf, freq>15), aes(word, freq))    
-  p <- p + geom_bar(stat="identity")   
-  p <- p + theme(axis.text.x=element_text(angle=45, hjust=1))   
-  p
+  print(sprintf("Saving pruned docterm data frame to %s", save_file))
+  saveRDS(df[1:cover,], save_file)
 }
 
-plot_wordcloud <- function(dtm) {
-  
-  freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)
-  set.seed(142)   
-  wordcloud(names(freq), freq, min.freq=10, scale=c(5, .1), colors=brewer.pal(6, "Dark2"))  
-}
-
-plot_wordcloud_top_n <- function(dtm, max.words=15) {
-  freq <- sort(colSums(as.matrix(dtm)), decreasing = TRUE)
-  set.seed(142)   
-  dark2 <- brewer.pal(6, "Dark2")   
-  wordcloud(names(freq), freq, max.words=max.words, rot.per=0.2, colors=dark2)  
-}
-
-hierarchical_cluster <- function(dtm) {
-  d <- dist(t(dtm), method="euclidian")   
-  fit <- hclust(d=d, method="ward")   
-  fit
-  
-  plot(fit, hang=-1)   
-}
-
-kmeans_plot <- function(dtm) {
-  d <- dist(t(dtm), method="euclidian")   
-  kfit <- kmeans(d, 2)   
-  clusplot(as.matrix(d), kfit$cluster, color=T, shade=T, labels=2, lines=0)   
-}

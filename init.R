@@ -6,9 +6,9 @@ reinit_environment <- function() {
     
     
     datums = list()
-    datums$df_ngram_2 <- readRDS("data/term_doc_matrix_2_ngram_df.rds")
-    # datums.df_ngram_3 <- readRDS("data/term_doc_matrix_3_ngram_df.rds")
-    # datums.df_ngram_4 <- readRDS("data/term_doc_matrix_4_ngram_df.rds")
+    # datums$df_ngram_2 <- readRDS("data/term_doc_matrix_2_ngram_df.rds")
+    datums$df_ngram_3 <- readRDS("data/term_doc_matrix_3_ngram_df.rds")
+    # datums$df_ngram_4 <- readRDS("data/term_doc_matrix_4_ngram_df.rds")
   })
   print(tmp)
   datums
@@ -47,4 +47,6 @@ lsos <- function(..., n=10) {
 
 
 datums <- reinit_environment()
+source("analysis.R")
+source("explore.R")
 print(lsos())
