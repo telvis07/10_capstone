@@ -11,15 +11,21 @@ reinit_environment <- function() {
     # datums$df_ngram_3 <- readRDS("data/term_doc_matrix_3_ngram_df.rds")
     # datums$df_ngram_4 <- readRDS("data/term_doc_matrix_4_ngram_df.rds")
     
-    # Datums after pruning
-    datums$df_ngram_2 <- readRDS("data/pruned_50p_term_doc_matrix_2_ngram_df.rds")
-    datums$df_ngram_2 <- mutate(datums$df_ngram_2, 
-                                word=as.character(word), 
-                                root_word=strsplit(as.character(word), " ")[[1]][1],
-                                rest=strsplit(as.character(word), " ")[[1]][2])
-
+    # # Datums after pruning
+    # datums$df_ngram_2 <- readRDS("data/pruned_50p_term_doc_matrix_2_ngram_df.rds")
+    # datums$df_ngram_2 <- mutate(datums$df_ngram_2, 
+    #                             word=as.character(word))
     # datums$df_ngram_3 <- readRDS("data/pruned_50p_term_doc_matrix_3_ngram_df.rds")
-    # datums$df_ngram_4 <- readRDS("ddata/pruned_50p_term_doc_matrix_4_ngram_df.rds")
+    # datums$df_ngram_3 <- mutate(datums$df_ngram_3, 
+    #                             word=as.character(word))
+    # datums$df_ngram_4 <- readRDS("data/pruned_50p_term_doc_matrix_4_ngram_df.rds")
+    # datums$df_ngram_4 <- mutate(datums$df_ngram_4, 
+    #                             word=as.character(word))
+    # datums$all_df <- c(datums$df_ngram_2,
+    #                    datums$df_ngram_3,
+    #                    datums$df_ngram_4)
+
+    datums$df_ngram_all <- readRDS("data/pruned_50p_term_doc_matrix_all_ngram_df.rds")
     
   })
   print(tmp)

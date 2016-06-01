@@ -206,4 +206,14 @@ hacking_with_weka <- function() {
 #   
 # }
 
+get_head_tail_of_ngram <- function() {
+  # Datums after pruning
+  datums$df_ngram_2 <- readRDS("data/pruned_50p_term_doc_matrix_2_ngram_df.rds")
+  datums$df_ngram_2 <- mutate(datums$df_ngram_2, 
+                              word=as.character(word),
+                              words=strsplit(word, " "),
+                              root_word=head(words, 1),
+                              rest=tail(words, -1))
+  
+}
 

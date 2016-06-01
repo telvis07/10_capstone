@@ -183,3 +183,23 @@ prune_ngram_df_by_cover_percentage <- function(df, save_file, percentage) {
   saveRDS(df[1:cover,], save_file)
 }
 
+merge_ngram_data <- function() {
+  # Datums after pruning
+  datums <- list()
+  datums$df_ngram_2 <- readRDS("data/pruned_50p_term_doc_matrix_2_ngram_df.rds")
+  datums$df_ngram_2 <- mutate(datums$df_ngram_2, 
+                              word=as.character(word))
+  datums$df_ngram_3 <- readRDS("data/pruned_50p_term_doc_matrix_3_ngram_df.rds")
+  datums$df_ngram_3 <- mutate(datums$df_ngram_3, 
+                              word=as.character(word))
+  datums$df_ngram_4 <- readRDS("data/pruned_50p_term_doc_matrix_4_ngram_df.rds")
+  datums$df_ngram_4 <- mutate(datums$df_ngram_4, 
+                              word=as.character(word))
+  datums$all_df <- c(datums$df_ngram_2,
+                     datums$df_ngram_3,
+                     datums$df_ngram_4)
+  save_file = "data/pruned_50p_term_doc_matrix_all_ngram_df.rds"
+  print(sprintf("Saving merged docterm data frame to %s", save_file))
+  saveRDS(datums$all_df, save_file)
+}
+
