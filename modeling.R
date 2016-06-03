@@ -28,6 +28,36 @@ tree_single_word <- function(min_frequency=10) {
   ngram_tree
 }
 
+build_tree <- function(min_frequency=10) {
+  tmp <- system.time({
+    print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
+    all_data <- filter(datums$df_ngram_all, freq > min_frequency)
+    print(sprintf("rows after: %s", nrow(all_data)))
+  })
+  print(tmp)
+  
+  tmp <- system.time({
+    all_data$pathString <- sapply(all_data$word, gen_path_string)
+    ngram_tree <- as.Node(all_data)
+    rm(all_data)
+  })
+  print(tmp)
+  
+  # the ngram tokenization didn't get frequencies for 1-grams.
+  # populate it from the tree
+  for (node in ngram_tree$children){ 
+    node$freq <- sum(node$Get("freq"), na.rm = TRUE) 
+  }
+  
+  # > sum(node$Get("freq"), na.rm =TRUE)
+  # [1] 138429
+  # > sum(last_root_word_df$freq)
+  # [1] 138429
+  ngram_tree
+}
+
+
+
 gen_path_string <- function (x) {
   paste("root", gsub(" ", "/", x), sep="/")
 }
