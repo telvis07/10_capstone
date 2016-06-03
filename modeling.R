@@ -45,32 +45,65 @@ fun_with_trees <- function() {
   # [1] 18583
 }
 
-
-
-search_tree <- function(ngram_tree, phrase, num_suggestions = 5) {
+multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
   words = strsplit(phrase, " ")
   words = unlist(words)
+  recommended_words = c()
+  likelihood = c()
+  # print(words)
+  
+  for (i in seq_along(words)) {
+    search_words = tail(words, i)
+    ret = search_tree(ngram_tree = ngram_tree,
+                      words = search_words,
+                      num_suggestions = num_suggestions)
+    if(!is.null(ret)) {
+      recommended_words = c(recommended_words, ret[1,])
+      likelihood = c(likelihood, ret[2,])
+    }
+  }
+  
+  ret = rbind(recommended_words, likelihood)
+  ret
+}
+
+search_tree <- function(ngram_tree, words, num_suggestions = 5) {
+  # words = strsplit(phrase, " ")
+  # words = unlist(words)
+  
   # depth 1 is 'root'
+  ret = NULL
   tree_depth = length(words) + 2
-  print(sprintf("phrase: %s", phrase))
+  print(words)
+  print(sprintf("phrase: %s", paste(words, collapse=" ")))
   print(sprintf("tree_depth: %s", tree_depth))
   subtree = ngram_tree$Climb(name=words)
+  
   if (!is.null(subtree)){
+    # there is a word path in the tree corresponding to the search phrase
+    
     # print(subtree, "word", "freq", limit=10)
     results = subtree$Get(function(x) {c(x$name, as.numeric(x$freq))}, 
                                         filterFun = function(x){x$level==tree_depth})
-    print(sprintf("phrase freq: %s", subtree$freq))
-    max_range = min(num_suggestions, dim(results)[2])
-    recommended_words = results[1, 1:max_range]
-    # Calculate the likelihood that this word follows the search phrase.
-    likelihood = sapply(results[2, 1:max_range], as.numeric)/subtree$freq 
-    ret = rbind(recommended_words, likelihood)
-  } else {
-    print(sprintf("No suggestions for word after: '%s'", phrase))
-    ret = NA
+    if (!is.null(results)){
+      # the word path exists and there are words that follow
+      
+      # print(sprintf("phrase freq: %s", subtree$freq))
+      print(class(results))
+      max_range = min(num_suggestions, dim(results)[2])
+      recommended_words = results[1, 1:max_range]
+      
+      # Calculate the likelihood that this word follows the search phrase.
+      likelihood = sapply(results[2, 1:max_range], as.numeric)/subtree$freq 
+      ret = rbind(recommended_words, likelihood)
+      print(ret)
+    }
+  } 
+  
+  if (is.null(ret)) {
+    print(sprintf("No suggestions for word after: '%s'", paste(words, collapse=" ")))
   }
 
-  print(ret)
   ret
 }
 
