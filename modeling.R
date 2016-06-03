@@ -1,10 +1,19 @@
 library(data.tree)
 library(dplyr)
 
-tree_single_word <- function() {
-  last_root_word_df <- filter(datums$df_ngram_all, grepl("^last ", word) & freq > 10)
-  last_root_word_df$pathString <- sapply(last_root_word_df$word, gen_path_string)
-  ngram_tree <- as.Node(last_root_word_df)
+tree_single_word <- function(min_frequency=10) {
+  tmp <- system.time({
+    last_root_word_df <- filter(datums$df_ngram_all, grepl("^last ", word) & freq > min_frequency)
+    year_root_word_df <- filter(datums$df_ngram_all, grepl("^year ", word) & freq > min_frequency)
+    all_data <- rbind(last_root_word_df, year_root_word_df)
+  })
+  print(tmp)
+  
+  tmp <- system.time({
+    all_data$pathString <- sapply(all_data$word, gen_path_string)
+    ngram_tree <- as.Node(all_data)
+  })
+  print(tmp)
   
   # the ngram tokenization didn't get frequencies for 1-grams.
   # populate it from the tree
@@ -12,11 +21,11 @@ tree_single_word <- function() {
     node$freq <- sum(node$Get("freq"), na.rm = TRUE) 
   }
 
-  
   # > sum(node$Get("freq"), na.rm =TRUE)
   # [1] 138429
   # > sum(last_root_word_df$freq)
   # [1] 138429
+  ngram_tree
 }
 
 gen_path_string <- function (x) {
