@@ -68,11 +68,13 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
 }
 
 search_tree <- function(ngram_tree, words, num_suggestions = 5) {
-  # words = strsplit(phrase, " ")
-  # words = unlist(words)
-  
-  # depth 1 is 'root'
   ret = NULL
+  
+  # tree_depth 1 is 'root'
+  # tree_depth 2 is word #1 in the 1-gram
+  # tree_depth 3 is word #2 in the 2-gram
+  # tree_depth 4 is word #3 in the 3-gram
+  # tree_depth 5 is word #4 in the 4-gram
   tree_depth = length(words) + 2
   print(words)
   print(sprintf("phrase: %s", paste(words, collapse=" ")))
