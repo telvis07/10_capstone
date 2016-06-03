@@ -72,6 +72,15 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
     }
   }
   
+  # calculate the most likely words over all queries
+  max_range = min(num_suggestions, length(likelihood))
+  ord = order(sapply(likelihood, as.numeric), decreasing = TRUE)
+  recommendations = recommended_words[ord[1:max_range]]
+  
+  # print recommended words
+  print("recommended words....")
+  print(recommendations)
+  
   ret = rbind(recommended_words, likelihood)
   ret
 }
@@ -85,9 +94,7 @@ search_tree <- function(ngram_tree, words, num_suggestions = 5) {
   # tree_depth 4 is word #3 in the 3-gram
   # tree_depth 5 is word #4 in the 4-gram
   tree_depth = length(words) + 2
-  print(words)
   print(sprintf("phrase: %s", paste(words, collapse=" ")))
-  print(sprintf("tree_depth: %s", tree_depth))
   subtree = ngram_tree$Climb(name=words)
   
   if (!is.null(subtree)){
@@ -100,12 +107,14 @@ search_tree <- function(ngram_tree, words, num_suggestions = 5) {
       # the word path exists and there are words that follow
       
       # print(sprintf("phrase freq: %s", subtree$freq))
-      print(class(results))
       max_range = min(num_suggestions, dim(results)[2])
       recommended_words = results[1, 1:max_range]
       
       # Calculate the likelihood that this word follows the search phrase.
+      # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
+      print(results[2, 1:max_range])
       likelihood = sapply(results[2, 1:max_range], as.numeric)/subtree$freq 
+      
       ret = rbind(recommended_words, likelihood)
       print(ret)
     }
