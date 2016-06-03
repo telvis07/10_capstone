@@ -33,6 +33,17 @@ fun_with_trees <- function() {
   # [1] 18583
 }
 
+search_tree <- function(ngram_tree, phrase) {
+  words = strsplit(phrase, " ")
+  words = unlist(words)
+  # depth 1 is 'root'
+  tree_depth = length(words) + 2
+  print(sprintf("phrase: %s", phrase))
+  print(sprintf("tree_depth: %s", tree_depth))
+  w = ngram_tree$Climb(name=words)$Get(function(x) {c(x$word, x$freq)}, 
+                                        filterFun = function(x){x$level==tree_depth})
+  w
+}
 
 
 
