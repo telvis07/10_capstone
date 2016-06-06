@@ -99,6 +99,13 @@ plot_word_frequencies <- function(dtm) {
   p
 }
 
+plot_word_frequencies_for_df <- function(df) {
+  tbl <- table(df$freq)
+  frequency_counts <- as.data.frame(tbl)
+  obj <- qplot(log(frequency_counts$Freq), frequency_counts$Var1)
+  obj
+}
+
 plot_wordcloud <- function(dtm) {
   freq <- sort(colSums(as.matrix(dtm)), decreasing=TRUE)
   set.seed(142)   

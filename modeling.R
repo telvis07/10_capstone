@@ -6,6 +6,7 @@ tree_single_word <- function(min_frequency=10) {
     last_root_word_df <- filter(datums$df_ngram_all, grepl("^last ", word) & freq > min_frequency)
     year_root_word_df <- filter(datums$df_ngram_all, grepl("^year ", word) & freq > min_frequency)
     all_data <- rbind(last_root_word_df, year_root_word_df)
+    print(sprintf("rows after: %s", nrow(all_data)))
   })
   print(tmp)
   
@@ -28,13 +29,15 @@ tree_single_word <- function(min_frequency=10) {
   ngram_tree
 }
 
-build_tree <- function(min_frequency=10) {
-  tmp <- system.time({
-    print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
-    all_data <- filter(datums$df_ngram_all, freq > min_frequency)
-    print(sprintf("rows after: %s", nrow(all_data)))
-  })
-  print(tmp)
+build_tree <- function(all_data, min_frequency=10) {
+  # tmp <- system.time({
+  #   print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
+  #   all_data <- filter(datums$df_ngram_all, freq > min_frequency)
+  #   print(sprintf("rows after: %s", nrow(all_data)))
+  # })
+  # print(tmp)
+  # print("deleting datums - to make room for the tree")
+  # rm(datums)
   
   tmp <- system.time({
     all_data$pathString <- sapply(all_data$word, gen_path_string)
@@ -92,8 +95,11 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
   # print(words)
   
   for (i in seq_along(words)) {
+    # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
+    # consider only doing backoff queries if the full phrase 
+    # returns no results.
     search_words = tail(words, i)
-    ret = search_tree(ngram_tree = ngram_tree,
+    ret = perform_search(ngram_tree = ngram_tree,
                       words = search_words,
                       num_suggestions = num_suggestions)
     if(!is.null(ret)) {
@@ -102,7 +108,7 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
     }
   }
   
-  # calculate the most likely words over all queries
+  # MLE - maximum likelihood estimate
   max_range = min(num_suggestions, length(likelihood))
   ord = order(sapply(likelihood, as.numeric), decreasing = TRUE)
   recommendations = recommended_words[ord[1:max_range]]
@@ -115,7 +121,7 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
   ret
 }
 
-search_tree <- function(ngram_tree, words, num_suggestions = 5) {
+perform_search <- function(ngram_tree, words, num_suggestions = 5) {
   ret = NULL
   
   # tree_depth 1 is 'root'
