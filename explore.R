@@ -1,4 +1,16 @@
 library(ggplot2)
+source("sample_data.R")
+
+do_explore <- function() {
+  generate_sample_files()
+  docs <- load_sample_dircorpus()
+  docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  
+  ngram_3 <- get_docterm_matrix(docs, 3)
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  #TODO: do plots
+}
 
 save_plot <- function(obj, filename="plots/default.png") {
   png(filename, width = 960, height = 960, units = "px")
@@ -7,23 +19,20 @@ save_plot <- function(obj, filename="plots/default.png") {
   print(sprintf("Saved %s", filename))
 }
 
-explore_ngram_data <- function(df=NULL, ngram_length=2) {
-  if (is.null(df)) {
-    save_file_df="data/term_doc_matrix_%s_ngram_df.rds"
-    save_file_df <- sprintf(save_file_df, ngram_length)
-    print(sprintf("Reading %s", save_file_df))
-    df <- readRDS(save_file_df)
-  }
-  
+explore_ngram_data <- function(df, ngram_length=2) {
   # top 10 words 
   print(head(df))
   
   # plot top 10
   save_plot_filename <- sprintf("plots/top_words_%s_ngram.png", ngram_length)
   top_df <- df[1:10,]
-  p <- ggplot(top_df, aes(word, freq))    
-  p <- p + geom_bar(stat="identity")   
-  p <- p + theme(axis.text.x=element_text(angle=45, hjust=1))   
+  top_df$word <- factor(top_df$word, levels=top_df[order(top_df$freq, decreasing = TRUE), "word"])
+  p <- ggplot(top_df, aes(x=word, y=freq))  + 
+    geom_bar(stat="identity") +
+    labs(x="Ngram") +
+    labs(y="Sampled Count") +
+    labs(title="Top Words by Ngram Length") +
+    coord_flip()  
   save_plot(p, save_plot_filename)
   
   # get frequencies
@@ -33,7 +42,6 @@ explore_ngram_data <- function(df=NULL, ngram_length=2) {
   # frequency plot
   save_plot_filename <- sprintf("plots/log_frequencies_%s_ngram.png", ngram_length)
   print("Hist plotting the term frequencies")
-  # obj <- qplot(log(df$freq))
   obj <- qplot(log(frequency_counts$Freq), frequency_counts$Var1)
 
   # plot the distribution of the frequencies

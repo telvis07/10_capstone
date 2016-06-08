@@ -99,9 +99,12 @@ multi_search_tree <- function(ngram_tree, phrase, num_suggestions=5){
     # consider only doing backoff queries if the full phrase 
     # returns no results.
     search_words = tail(words, i)
-    ret = perform_search(ngram_tree = ngram_tree,
-                      words = search_words,
-                      num_suggestions = num_suggestions)
+    tmp <- system.time({
+      ret = perform_search(ngram_tree = ngram_tree,
+                        words = search_words,
+                        num_suggestions = num_suggestions)
+    })
+    print(tmp)
     if(!is.null(ret)) {
       recommended_words = c(recommended_words, ret[1,])
       likelihood = c(likelihood, ret[2,])

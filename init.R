@@ -3,8 +3,6 @@ setwd('/Users/telvis/work/datasciencecoursera/10_capstone')
 
 reinit_environment <- function() {
   tmp = system.time({
-    
-    
     datums = list()
     # All datums
     # datums$df_ngram_2 <- readRDS("data/term_doc_matrix_2_ngram_df.rds")

@@ -8,7 +8,7 @@ sample_capstone_data <- function(fn, outfn, sample_len=0.01) {
   print(sprintf("Read %s Length %s", fn, length(lines)))
   lines_sample <- lines[rbinom(length(lines)*sample_len, length(lines), 0.5)]
   print(sprintf("Writing %s. Length %s", outfn, length(lines_sample)))
-  write.csv(lines, file=outfn, row.names=FALSE, col.names=FALSE)
+  write.csv(lines_sample, file=outfn, row.names=FALSE, col.names=FALSE)
 }
 
 generate_sample_files <- function() {
@@ -39,8 +39,7 @@ load_sample_dircorpus <- function(sampledir="./data/final/en_US/sample/",
   docs
 }
 
-newline_text_file_to_corpus <- function(filename,
-                                        nlines=10) {
+newline_text_file_to_corpus <- function(filename) {
   lines <- readLines(filename)
   t_corpus <- Corpus(VectorSource(lines))
   t_corpus

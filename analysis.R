@@ -54,20 +54,23 @@ newline_text_file_to_corpus <- function(filename,
   t_corpus
 }
 
-load_all_data <- function(nlines=10) {
-  tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.twitter.txt",
+load_all_data <- function(nlines=0, procsess=FALSE) {
+  tmp <- system.time({
+    tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.twitter.txt",
+                                          nlines=nlines)
+    tweets <- preprocess_entries(tweets)
+    tweets <- add_meta_data_to_docs(tweets, "doc_type", "twitter")
+    blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.blogs.txt",
+                                         nlines=nlines)
+    blogs <- preprocess_entries(blogs)
+    blogs <- add_meta_data_to_docs(blogs, "doc_type", "blog")
+    news <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.news.txt",
                                         nlines=nlines)
-  tweets <- preprocess_entries(tweets)
-  tweets <- add_meta_data_to_docs(tweets, "doc_type", "twitter")
-  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.blogs.txt",
-                                       nlines=nlines)
-  blogs <- preprocess_entries(blogs)
-  blogs <- add_meta_data_to_docs(blogs, "doc_type", "blog")
-  news <- newline_text_file_to_corpus(filename="./data/final/en_US/en_US.news.txt",
-                                      nlines=nlines)
-  news <- add_meta_data_to_docs(news, "doc_type", "news")
-  news <- preprocess_entries(blogs)
-  docs <- c(tweets, blogs, news)
+    news <- add_meta_data_to_docs(news, "doc_type", "news")
+    news <- preprocess_entries(blogs)
+    docs <- c(tweets, blogs, news)
+  })
+  print(tmp)
   docs
 }
 
@@ -150,6 +153,7 @@ get_docterm_matrix <- function(docs,
   }
 
   print(sprintf("Saving docterm matrix to %s", save_file))
+  # verify the tokens are saved as strings and not as factors
   saveRDS(dtm, save_file)
 
   print("Most frequent words")
@@ -157,12 +161,24 @@ get_docterm_matrix <- function(docs,
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
   
+  # verify the class of 'word' is character instead of 'factor'
+  # also remove the 'row.names' because it increases memory usage.
+  wf <- mutate(wf, word=as.character(word))
+  
   print(sprintf("Saving docterm data frame to %s", save_file_df))
   saveRDS(wf, save_file_df)
   
   print(head(wf))
   
-  dtm
+  docterm_datums = list()
+  
+  # doc term matrix
+  docterm_datums$dtm <- dtm
+  
+  # sorted word frequency data.frame
+  docterm_datums$wf <- wf
+  
+  docterm_datums
   
   # sparse_filter=0.05
   # dtms <- removeSparseTerms(dtm, 0.01)
