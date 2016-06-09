@@ -1,15 +1,176 @@
 library(ggplot2)
+library(gridExtra)
+
 source("sample_data.R")
 
-do_explore <- function() {
-  generate_sample_files()
-  docs <- load_sample_dircorpus()
-  docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
-  ngram_2 <- get_docterm_matrix(docs, 2)
+twitter_word_plot <- function(twitter_grams) {
+  # get frequencies
+  tbl <- table(twitter_grams$wf$freq)
+  frequency_counts <- as.data.frame(tbl)
+  frequency_counts$Var1 <- as.numeric(frequency_counts$Var1)
   
+  # frequency plot
+  obj <- ggplot(frequency_counts, aes(Var1, Freq)) +
+    geom_bar(stat="identity") +
+    labs(x="Word Frequency") +
+    labs(y="Number of words with frequency") +
+    scale_x_continuous(breaks=seq(0,max(frequency_counts$Var1),25))
+  print(obj)
+}
+
+do_explore_per_data_source <- function() {
+  # twitter data
+  twitter <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
+  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
+  news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
+  
+
+  
+  twitter <- preprocess_entries(twitter, save_file="data/processed_twitter_sample_corpus.rds")
+  blogs <- preprocess_entries(blogs, save_file="data/processed_blogs_sample_corpus.rds")
+  news <- preprocess_entries(news, save_file="data/processed_news_sample_corpus.rds")
+  
+  twitter_grams <- get_docterm_matrix(twitter, 1)
+  blogs_grams <- get_docterm_matrix(blogs, 1)
+  news_grams <- get_docterm_matrix(news, 1)
+  
+  content_stats_df <- data.frame(
+    source = c("twitter", "blogs", "news"),
+    num_lines = c(
+      length(twitter) * 100,
+      length(blogs) * 100,
+      length(news) * 100
+    ),
+    num_words = c (
+      nrow(twitter_grams$wf) * 100,
+      nrow(blogs_grams$wf) * 100,
+      nrow(news_grams$wf) * 100
+    ),
+    mean_word_freq = c(
+      mean(twitter_grams$wf$freq),
+      mean(blogs_grams$wf$freq),
+      mean(news_grams$wf$freq)
+    ),
+    median_word_freq = c(
+      median(twitter_grams$wf$freq),
+      median(blogs_grams$wf$freq),
+      median(news_grams$wf$freq)
+    )
+  )
+  print(content_stats_df)
+  
+  # get frequencies
+  tbl <- table(twitter_grams$wf$freq)
+  frequency_counts <- as.data.frame(tbl)
+  
+  # frequency plot
+  # obj <- qplot(frequency_counts$Freq, frequency_counts$Var1)
+  obj <- ggplot(twitter_grams$wf, aes(word, freq)) +
+    geom_bar(stat="identity") +
+    labs(x="Word Frequency") +
+    labs(y="Number of words with frequency")
+  # # TODO
+  # # Set tick marks on y axis
+  # # a tick mark is shown on every 5
+  # p + scale_y_continuous(breaks=seq(0,40,5))
+  # 
+  # # Tick marks can be spaced randomly
+  # p + scale_y_continuous(breaks=c(5,7.5, 20, 25))
+  # 
+  # # Remove tick mark labels and gridlines
+  # p + scale_y_continuous(breaks=NULL)
+  
+  print(obj)
+  
+  # twitter <- preprocess_entries(twitter, save_file="data/processed_twitter_sample_corpus.rds")
+  # blogs <- preprocess_entries(blogs, save_file="data/processed_blogs_sample_corpus.rds")
+  # news <- preprocess_entries(news, save_file="data/processed_news_sample_corpus.rds")
+  # 
+  # #
+  # twitter_grams <- get_docterm_matrix(twitter, 2)
+  # blogs_grams <- get_docterm_matrix(blogs, 2)
+  # news_grams <- get_docterm_matrix(news, 2)
+  # 
+  # # # ngram top words
+  # p2 <- generate_word_frequency_plot(twitter_grams$wf)
+  # p3 <- generate_word_frequency_plot(blogs_grams$wf)
+  # p4 <- generate_word_frequency_plot(news_grams$wf)
+  # p <- grid.arrange(p2, p3, p4, ncol=3, top="Top Words by Source")
+}
+
+do_explore <- function(docs=NULL) {
+  # generate_sample_files()
+  if (is.null(docs)) {
+    docs <- load_sample_dircorpus()
+    docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
+  }
+  
+  # ngram top words
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  p2 <- generate_word_frequency_plot(ngram_2$wf, 2)
   ngram_3 <- get_docterm_matrix(docs, 3)
+  p3 <- generate_word_frequency_plot(ngram_3$wf, 3)
   ngram_4 <- get_docterm_matrix(docs, 4)
-  #TODO: do plots
+  p4 <- generate_word_frequency_plot(ngram_4$wf, 4)
+  p <- grid.arrange(p2, p3, p4, ncol=3, top="Top Words by Ngram Length")
+  
+  # ngram min, max, freq
+  freq_stats_2 <- ngram_frequency_stats(ngram_2$wf)
+  freq_stats_2$ngram_length = 2
+  freq_stats_3 <-ngram_frequency_stats(ngram_3$wf)
+  freq_stats_3$ngram_length = 3
+  freq_stats_4 <-ngram_frequency_stats(ngram_4$wf)
+  freq_stats_4$ngram_length = 4
+  # TODO: plot in facet_grid?
+}
+
+get_sample_stats <- function() {
+  tmp <- system.time({
+    print("reading twitter")
+    tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
+    
+    print("reading blogs")
+    blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
+    print("reading news")
+    news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
+    print("Joining data")
+    docs <- c(tweets, blogs, news)
+    print(sprintf("Saving vector corpus to %s", save_file))
+    saveRDS(docs, save_file)
+  })
+  print(tmp)
+  docs
+}
+
+ngram_frequency_stats <- function(df, ngram_length=2) {
+  
+  # 3. How many unique words do you need in a frequency sorted dictionary 
+  # to cover 50% of all word instances in the language?
+  sums <- cumsum(df$freq)
+  cover_50 <- which(sums > sum(df$freq) * .50)[1]
+  
+  stats_df <- data.frame(
+    min=min(df$freq),
+    max=max(df$freq),
+    mean=mean(df$freq),
+    count=nrow(df),
+    cover_50=cover_50/nrow(df)*100 
+  )
+  
+  stats_df
+  
+}
+
+generate_word_frequency_plot <- function(df) {
+  # convert 'word' to a factor variable that is sorted by the frequency.
+  # so the plot will be in decreasing order by frequency
+  top_df <- df[1:20,]
+  top_df$word <- factor(top_df$word, levels=top_df[order(top_df$freq), "word"])
+  p <- ggplot(top_df, aes(x=word, y=freq))  + 
+    geom_bar(stat="identity") +
+    labs(x="word") +
+    labs(y="1% sample count") +
+    coord_flip()  
 }
 
 save_plot <- function(obj, filename="plots/default.png") {
@@ -25,8 +186,10 @@ explore_ngram_data <- function(df, ngram_length=2) {
   
   # plot top 10
   save_plot_filename <- sprintf("plots/top_words_%s_ngram.png", ngram_length)
-  top_df <- df[1:10,]
-  top_df$word <- factor(top_df$word, levels=top_df[order(top_df$freq, decreasing = TRUE), "word"])
+  top_df <- df[1:20,]
+  # convert 'word' to a factor variable that is sorted by the frequency.
+  # so the plot will be in decreasing order by frequency
+  top_df$word <- factor(top_df$word, levels=top_df[order(top_df$freq), "word"])
   p <- ggplot(top_df, aes(x=word, y=freq))  + 
     geom_bar(stat="identity") +
     labs(x="Ngram") +
