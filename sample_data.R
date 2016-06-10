@@ -29,13 +29,16 @@ generate_sample_files <- function() {
 }
 
 load_sample_dircorpus <- function(sampledir="./data/final/en_US/sample/", 
-                                  save_file="data/sample_corpus.rds") {
+                                  save_file=NULL) {
   docs <- Corpus(DirSource(sampledir),
                  readerControl = list(
                    language="en_US"
                  ))
-  print(sprintf("Saving corpus to %s", save_file))
-  saveRDS(docs, save_file)
+  # save datums
+  if (! is.null(save_file)) {
+    print(sprintf("Saving corpus to %s", save_file))
+    saveRDS(docs, save_file)
+  }
   docs
 }
 

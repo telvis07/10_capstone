@@ -1,4 +1,5 @@
 rm(list=ls())
+library(RWeka)
 setwd('/Users/telvis/work/datasciencecoursera/10_capstone')
 
 reinit_environment <- function() {
@@ -27,7 +28,7 @@ reinit_environment <- function() {
     # min_frequency=100
     # datums$df_ngram_all <- filter(datums$df_ngram_all, freq > min_frequency)
     
-    datums$df_ngram_all <- readRDS("data/pruned_50p_term_doc_matrix_all_ngram_minfreq_100_df.rds")
+    # datums$df_ngram_all <- readRDS("data/pruned_50p_term_doc_matrix_all_ngram_minfreq_100_df.rds")
     # datums$ngram_tree <- readRDS("data/ngram_all_minfreq_175_tree.rds")
     
   })

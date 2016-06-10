@@ -3,67 +3,91 @@ library(gridExtra)
 source("sample_data.R")
 source("modeling.R")
 
-do_explore_per_data_source <- function() {
+get_sample_datums_vector_corpus <- function() {
+  sample_vector_corpus <- list() 
   # twitter data
-  twitter <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
-  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
-  news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
+  sample_vector_corpus$twitter <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
+  sample_vector_corpus$blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
+  sample_vector_corpus$news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
+  sample_vector_corpus$all_corpus <- load_sample_dircorpus()
   
-  twitter <- preprocess_entries(twitter, save_file="data/processed_twitter_sample_corpus.rds")
-  blogs <- preprocess_entries(blogs, save_file="data/processed_blogs_sample_corpus.rds")
-  news <- preprocess_entries(news, save_file="data/processed_news_sample_corpus.rds")
+  sample_vector_corpus$twitter <- preprocess_entries(sample_vector_corpus$twitter)
+  sample_vector_corpus$blogs <- preprocess_entries(sample_vector_corpus$blogs)
+  sample_vector_corpus$news <- preprocess_entries(sample_vector_corpus$news)
+  sample_vector_corpus$all_corpus <- preprocess_entries(sample_vector_corpus$all_corpus)
+
+  # 
+  sample_vector_corpus
+}
+
+do_explore_per_data_source <- function(sample_vector_corpus) {
+  twitter <- sample_vector_corpus$twitter
+  blogs <- sample_vector_corpus$blogs
+  news <- sample_vector_corpus$news
+  all_corpus <- sample_vector_corpus$all_corpus
   
   twitter_grams <- get_docterm_matrix(twitter, 1)
   blogs_grams <- get_docterm_matrix(blogs, 1)
   news_grams <- get_docterm_matrix(news, 1)
+  all_corpus_ngrams <- get_docterm_matrix(all_corpus, 1)
   
   content_stats_df <- data.frame(
-    source = c("twitter", "blogs", "news"),
+    source = c("twitter", "blogs", "news", "all combined"),
     num_lines = c(
-      length(twitter) * 100,
-      length(blogs) * 100,
-      length(news) * 100
+      length(twitter),
+      length(blogs),
+      length(news),
+      length(all_corpus)
     ),
-    num_words = c (
-      nrow(twitter_grams$wf) * 100,
-      nrow(blogs_grams$wf) * 100,
-      nrow(news_grams$wf) * 100
+    num_unique_words = c (
+      nrow(twitter_grams$wf),
+      nrow(blogs_grams$wf),
+      nrow(news_grams$wf),
+      nrow(twitter_grams$wf) + nrow(blogs_grams$wf) + nrow(news_grams$wf)
     ),
     mean_word_freq = c(
-      mean(twitter_grams$wf$freq),
-      mean(blogs_grams$wf$freq),
-      mean(news_grams$wf$freq)
+      round(mean(twitter_grams$wf$freq), 0),
+      round(mean(blogs_grams$wf$freq), 0),
+      round(mean(news_grams$wf$freq), 0),
+      round(mean(all_corpus_ngrams$wf$freq), 0)
     ),
     median_word_freq = c(
       median(twitter_grams$wf$freq),
       median(blogs_grams$wf$freq),
-      median(news_grams$wf$freq)
+      median(news_grams$wf$freq),
+      median(all_corpus_ngrams$wf$freq)
     )
   )
-  print(content_stats_df)
+  content_stats_df
   
   # get frequencies
-  twitter_word_plot(twitter_grams = twitter_grams)
+  # twitter_word_plot(twitter_grams = twitter_grams)
   
   # ngrams per source
-  
 }
 
-ngrams_per_source <- function(twitter, blogs, news, num_gram=2) {
+ngrams_per_source_plot <- function(sample_vector_corpus,num_gram=2) {
+  twitter <- sample_vector_corpus$twitter
+  blogs <- sample_vector_corpus$blogs
+  news <- sample_vector_corpus$news
+  
   twitter_grams <- get_docterm_matrix(twitter, num_gram)
   blogs_grams <- get_docterm_matrix(blogs, num_gram)
   news_grams <- get_docterm_matrix(news, num_gram)
   title <- sprintf("Top %s-Grams by Source", num_gram)
 
   # # ngram top words
-  p2 <- generate_word_frequency_plot(twitter_grams$wf)
-  p3 <- generate_word_frequency_plot(blogs_grams$wf)
-  p4 <- generate_word_frequency_plot(news_grams$wf)
+  p2 <- generate_word_frequency_plot(twitter_grams$wf, "twitter")
+  p3 <- generate_word_frequency_plot(blogs_grams$wf, "blogs")
+  p4 <- generate_word_frequency_plot(news_grams$wf, "news")
   p <- grid.arrange(p2, p3, p4, ncol=3, top=title)
-  print(p)
+  p
 }
 
-twitter_word_plot <- function(twitter_grams) {
+twitter_word_plot <- function(sample_vector_corpus) {
+  twitter <- sample_vector_corpus$twitter
+  twitter_grams <- get_docterm_matrix(twitter, 1)
+  
   # get frequencies
   tbl <- table(twitter_grams$wf$freq)
   frequency_counts <- as.data.frame(tbl)
@@ -76,7 +100,8 @@ twitter_word_plot <- function(twitter_grams) {
     labs(y="Number of words with identical frequency") +
     labs(title="Twitter 1% Sample: Word Frequency vs. Number of Words at each Frequency") +
     scale_x_continuous(breaks=seq(0,max(frequency_counts$Var1),25))
-  print(obj)
+  
+  obj
 }
 
 ngram_language_modeling <- function(docs=NULL) {
@@ -92,7 +117,7 @@ ngram_language_modeling <- function(docs=NULL) {
   # generate_sample_files()
   if (is.null(docs)) {
     docs <- load_sample_dircorpus()
-    docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
+    docs <- preprocess_entries(docs)
   }
   
   ngram_2 <- get_docterm_matrix(docs, 2)
@@ -110,19 +135,23 @@ ngram_language_modeling <- function(docs=NULL) {
   # https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html
   ngram_tree <- build_tree(starts_with_data_ngram_df)
   
+  ngram_tree
+  
   # 
-  plot_tree_for_report(ngram_tree)
+  # plot_tree_for_report(ngram_tree)
   
   #
-  predict_with_test_tree(ngram_tree)
+  # predict_with_test_tree(ngram_tree)
 }
 
-plot_tree_for_report <- function(ngram_tree) {
+plot_tree_for_report <- function(ngram_tree, highlight_child=FALSE) {
   SetGraphStyle(ngram_tree, rankdir = "TB")
   SetEdgeStyle(ngram_tree, arrowhead = "vee", color = "grey35", penwidth = 2)
   SetNodeStyle(ngram_tree, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow", 
                fontname = "helvetica", tooltip = GetDefaultTooltip)
-  SetNodeStyle(ngram_tree$data$entry, fillcolor = "LightBlue", penwidth = "5px")
+  if (highlight_child) {
+    SetNodeStyle(ngram_tree$data$entry, fillcolor = "LightBlue", penwidth = "5px")
+  }
   plot(ngram_tree)
 }
 
@@ -199,7 +228,7 @@ ngram_frequency_stats <- function(df, ngram_length=2) {
   
 }
 
-generate_word_frequency_plot <- function(df) {
+generate_word_frequency_plot <- function(df, title="") {
   # convert 'word' to a factor variable that is sorted by the frequency.
   # so the plot will be in decreasing order by frequency
   top_df <- df[1:20,]
@@ -207,7 +236,8 @@ generate_word_frequency_plot <- function(df) {
   p <- ggplot(top_df, aes(x=word, y=freq))  + 
     geom_bar(stat="identity") +
     labs(x="word") +
-    labs(y="1% sample count") +
+    labs(y="frequency") +
+    labs(title=title) +
     coord_flip()  
 }
 

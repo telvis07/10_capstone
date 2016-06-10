@@ -30,6 +30,19 @@ tree_single_word <- function(min_frequency=10) {
 }
 
 build_tree <- function(all_ngram_df) {
+  all_ngram_df$pathString <- sapply(all_ngram_df$word, gen_path_string)
+  ngram_tree <- as.Node(all_ngram_df)
+
+  # the ngram tokenization didn't get frequencies for 1-grams.
+  # populate it from the tree
+  for (node in ngram_tree$children){ 
+    node$freq <- sum(node$Get("freq"), na.rm = TRUE) 
+  }
+  
+  ngram_tree
+}
+
+build_tree_with_timing <- function(all_ngram_df) {
   # tmp <- system.time({
   #   print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
   #   all_data <- filter(datums$df_ngram_all, freq > min_frequency)
@@ -130,7 +143,6 @@ perform_search <- function(ngram_tree, words, num_suggestions = 5) {
   # tree_depth 4 is word #3 in the 3-gram
   # tree_depth 5 is word #4 in the 4-gram
   tree_depth = length(words) + 2
-  print(sprintf("phrase: %s", paste(words, collapse=" ")))
   subtree = ngram_tree$Climb(name=words)
   
   if (!is.null(subtree)){

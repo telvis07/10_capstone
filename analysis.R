@@ -81,7 +81,7 @@ remove_profanity <- function(docs) {
   docs
 }
 
-preprocess_entries <- function(docs, save_file="data/preprocessed_corpus.rds") {
+preprocess_entries_with_timing <- function(docs, save_file="data/preprocessed_corpus.rds") {
   
   options(mc.cores=4)
   
@@ -111,6 +111,19 @@ preprocess_entries <- function(docs, save_file="data/preprocessed_corpus.rds") {
   docs
 }
 
+preprocess_entries <- function(docs) {
+  
+  options(mc.cores=4)
+  
+  docs <- tm_map(docs, removePunctuation)  # *Removing punctuation:*  
+  docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
+  docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
+  docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
+  docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
+  docs <- remove_profanity(docs)
+  docs
+}
+
 do_system.time <- function(what, args){
   tmp <- system.time({
       ret = do.call(what, args)
@@ -119,7 +132,7 @@ do_system.time <- function(what, args){
   ret
 }
 
-get_docterm_matrix <- function(docs, 
+get_docterm_matrix_with_timing <- function(docs, 
                                ngram_length=1,
                                save_file="data/term_doc_matrix_%s_ngram.rds",
                                save_file_df="data/term_doc_matrix_%s_ngram_df.rds") {
@@ -183,6 +196,38 @@ get_docterm_matrix <- function(docs,
   # sparse_filter=0.05
   # dtms <- removeSparseTerms(dtm, 0.01)
   # list(full=dtm, sparse=dtms)
+}
+
+get_docterm_matrix <- function(docs, ngram_length=1) {
+  options(mc.cores=1)
+  
+  tokenizer <- function(x) {
+    NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
+  }
+  if (ngram_length > 1) {
+      dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
+  } else {
+      dtm <- DocumentTermMatrix(docs)
+  }
+  
+  freq <- colSums(as.matrix(dtm))
+  freq <- sort(freq, decreasing=TRUE)
+  wf <- data.frame(word=names(freq), freq=freq)
+  
+  # verify the class of 'word' is character instead of 'factor'
+  # also remove the 'row.names' because it increases memory usage.
+  wf <- mutate(wf, word=as.character(word))
+  
+  # return term/doc matrix and word frequency data.frame in a list
+  docterm_datums = list()
+  
+  # doc term matrix
+  docterm_datums$dtm <- dtm
+  
+  # sorted word frequency data.frame
+  docterm_datums$wf <- wf
+  
+  docterm_datums
 }
 
 prune_ngram_df_by_cover_percentage <- function(df, save_file, percentage) {
