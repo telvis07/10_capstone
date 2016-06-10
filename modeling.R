@@ -148,11 +148,9 @@ perform_search <- function(ngram_tree, words, num_suggestions = 5) {
       
       # Calculate the likelihood that this word follows the search phrase.
       # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
-      print(results[2, 1:max_range])
       likelihood = sapply(results[2, 1:max_range], as.numeric)/subtree$freq 
       
       ret = rbind(recommended_words, likelihood)
-      print(ret)
     }
   } 
   

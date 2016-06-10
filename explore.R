@@ -112,6 +112,9 @@ ngram_language_modeling <- function(docs=NULL) {
   
   # 
   plot_tree_for_report(ngram_tree)
+  
+  #
+  predict_with_test_tree(ngram_tree)
 }
 
 plot_tree_for_report <- function(ngram_tree) {
@@ -121,6 +124,16 @@ plot_tree_for_report <- function(ngram_tree) {
                fontname = "helvetica", tooltip = GetDefaultTooltip)
   SetNodeStyle(ngram_tree$data$entry, fillcolor = "LightBlue", penwidth = "5px")
   plot(ngram_tree)
+}
+
+predict_with_test_tree <- function(ngram_tree) {
+  results <- perform_search(ngram_tree, c("data"))
+  print("Predict next word after typing: 'data'")
+  print(results)
+  
+  print("Predict next word after typing: 'data entry'")
+  results <- perform_search(ngram_tree, c("data", "entry"))
+  print(results)
 }
 
 do_explore_ngrams <- function(docs=NULL) {
