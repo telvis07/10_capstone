@@ -1,5 +1,6 @@
 library(ggplot2)
 library(gridExtra)
+source("analysis.R")
 source("sample_data.R")
 source("modeling.R")
 
@@ -32,30 +33,26 @@ do_explore_per_data_source <- function(sample_vector_corpus) {
   all_corpus_ngrams <- get_docterm_matrix(all_corpus, 1)
   
   content_stats_df <- data.frame(
-    source = c("twitter", "blogs", "news", "all combined"),
+    source = c("twitter", "blogs", "news"),
     num_lines = c(
       length(twitter),
       length(blogs),
-      length(news),
-      length(all_corpus)
+      length(news)
     ),
     num_unique_words = c (
       nrow(twitter_grams$wf),
       nrow(blogs_grams$wf),
-      nrow(news_grams$wf),
-      nrow(twitter_grams$wf) + nrow(blogs_grams$wf) + nrow(news_grams$wf)
+      nrow(news_grams$wf)
     ),
     mean_word_freq = c(
       round(mean(twitter_grams$wf$freq), 0),
       round(mean(blogs_grams$wf$freq), 0),
-      round(mean(news_grams$wf$freq), 0),
-      round(mean(all_corpus_ngrams$wf$freq), 0)
+      round(mean(news_grams$wf$freq), 0)
     ),
     median_word_freq = c(
       median(twitter_grams$wf$freq),
       median(blogs_grams$wf$freq),
-      median(news_grams$wf$freq),
-      median(all_corpus_ngrams$wf$freq)
+      median(news_grams$wf$freq)
     )
   )
   content_stats_df
@@ -104,6 +101,26 @@ twitter_word_plot <- function(sample_vector_corpus) {
   obj
 }
 
+all_docs_word_plot <- function(sample_vector_corpus) {
+  all_corpus <- sample_vector_corpus$all_corpus
+  all_corpus_grams <- get_docterm_matrix(all_corpus, 1)
+  
+  # get frequencies
+  tbl <- table(all_corpus_grams$wf$freq)
+  frequency_counts <- as.data.frame(tbl)
+  frequency_counts$Var1 <- as.numeric(frequency_counts$Var1)
+  
+  # frequency plot
+  obj <- ggplot(frequency_counts, aes(Var1, Freq)) +
+    geom_bar(stat="identity") +
+    labs(x="Number of occurences in corpus (frequency)") +
+    labs(y="Number of words with identical frequency") +
+    labs(title="1% Sample: Word Frequency vs. Number of Words at each Frequency") +
+    scale_x_continuous(breaks=seq(0,max(frequency_counts$Var1),25))
+  
+  obj
+}
+
 ngram_language_modeling <- function(docs=NULL) {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
@@ -144,15 +161,17 @@ ngram_language_modeling <- function(docs=NULL) {
   # predict_with_test_tree(ngram_tree)
 }
 
-plot_tree_for_report <- function(ngram_tree, highlight_child=FALSE) {
-  SetGraphStyle(ngram_tree, rankdir = "TB")
+plot_tree_for_report <- function(ngram_tree, 
+                                 highlight_child=FALSE, 
+                                 title="Tree Lookup for: data") {
+  SetGraphStyle(ngram_tree, rankdir = "TB",  label = title, fontsize=40 )
   SetEdgeStyle(ngram_tree, arrowhead = "vee", color = "grey35", penwidth = 2)
   SetNodeStyle(ngram_tree, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow", 
                fontname = "helvetica", tooltip = GetDefaultTooltip)
   if (highlight_child) {
     SetNodeStyle(ngram_tree$data$entry, fillcolor = "LightBlue", penwidth = "5px")
   }
-  plot(ngram_tree)
+  plot(ngram_tree )
 }
 
 predict_with_test_tree <- function(ngram_tree) {
@@ -180,15 +199,7 @@ do_explore_ngrams <- function(docs=NULL) {
   ngram_4 <- get_docterm_matrix(docs, 4)
   p4 <- generate_word_frequency_plot(ngram_4$wf, 4)
   p <- grid.arrange(p2, p3, p4, ncol=3, top="Top Words by Ngram Length")
-  
-  # ngram min, max, freq
-  freq_stats_2 <- ngram_frequency_stats(ngram_2$wf)
-  freq_stats_2$ngram_length = 2
-  freq_stats_3 <-ngram_frequency_stats(ngram_3$wf)
-  freq_stats_3$ngram_length = 3
-  freq_stats_4 <-ngram_frequency_stats(ngram_4$wf)
-  freq_stats_4$ngram_length = 4
-  # TODO: plot in facet_grid?
+  p
 }
 
 get_sample_stats <- function() {
@@ -263,6 +274,8 @@ explore_ngram_data <- function(df, ngram_length=2) {
     labs(x="Ngram") +
     labs(y="Sampled Count") +
     labs(title="Top Words by Ngram Length") +
+    # theme(text = element_text(size=8)) +
+    theme(axis.text.x=element_text(angle=45, hjust=1)) +
     coord_flip()  
   save_plot(p, save_plot_filename)
   

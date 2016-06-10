@@ -6,15 +6,16 @@ output:
   html_document:
     keep_md: yes
   pdf_document: default
+
 ---
 
-# Executive Summary
+## Executive Summary
 
 [Swiftkey](url/to/switftkey) develop a word prediction application that is used while typing into a keyboards on a mobile keyboard. When the user types: "I went to the " : the application presents three options for what the next word might be. For example, the three words might be `gym, store, restaurant`.
 
 In this project, we use `R` to build a predictive model using text data provided by the [Data Science Capstone course](path/to/capstone). The data consists of text from 'Blogs', 'News' and 'Twitter' totaling more than 4 million lines and `???` unique words.
 
-## TL;DR
+### TL;DR
 
 In a nutshell, here's a summary of the data analysis performed in this report.
 
@@ -24,13 +25,14 @@ In a nutshell, here's a summary of the data analysis performed in this report.
 4. Generate 2-grams, 3-grams and 4-grams.
 5. Present a technique to use the [Dirichlet-multinomial model](path/to/wikipedia) as a language model.
 
-## Loading the data
 
 ```{r, echo=FALSE,message=FALSE}
 library(knitr)
 library(dplyr)
 library(tm)
 library(RWeka)
+library(xtable)
+
 source("analysis.R")
 source("explore.R")
 source("modeling.R")
@@ -38,26 +40,29 @@ source("sample_data.R")
 ```
 
 
-First, I fetched the data from the URL provided by the course. Here are line counts per file.
+<!-- First, I fetched the data from the URL provided by the course. Here are line counts per file. -->
 
-```
-$ wc -l data/final/en_US/*.txt
-  899288 data/final/en_US/en_US.blogs.txt
- 1010242 data/final/en_US/en_US.news.txt
- 2360148 data/final/en_US/en_US.twitter.txt
- 4269678 total
-```
+<!-- ``` -->
+<!-- $ wc -l data/final/en_US/*.txt -->
+<!--   899288 data/final/en_US/en_US.blogs.txt -->
+<!--  1010242 data/final/en_US/en_US.news.txt -->
+<!--  2360148 data/final/en_US/en_US.twitter.txt -->
+<!--  4269678 total -->
+<!-- ``` -->
 
 ## Explore the Data
 First, we sample 1% of the lines in the files in order to speed up the data exploration. The implementation is in [sample_capstone_data in sample_data.R](./sample_data.R). We use [tm R package](path/to/tm.html) to load each sample file for analysis. 
 
-```{r, echo=TRUE,cache=FALSE}
+```{r, echo=FALSE,cache=TRUE}
 sample_vector_corpus <- get_sample_datums_vector_corpus()
 content_stats_df <- do_explore_per_data_source(sample_vector_corpus)
-content_stats_df
 ```
 
-### Text Preprocessing
+```{r echo=FALSE, fig.align='center', fig.cap="Sampled Text Summary"}
+kable(content_stats_df, row.names=TRUE, format = "markdown", caption="Table 1: Sampled Text Summary")
+```
+
+### Text Cleaning
 We perform the following text processing steps prior to parsing ngrams.
 
 - Remove all Punctuation
@@ -67,45 +72,58 @@ We perform the following text processing steps prior to parsing ngrams.
 - Strip extra whitespace
 - Remove Profanity
 
-### Word Frequency Distribution
+### Word Frequencies
 
-For example, look at the word frequency distribution for twitter sample data
+For example, look at the word frequency distribution for the sample data
 
 ```{r, echo=TRUE, cache=TRUE}
-p <- twitter_word_plot(sample_vector_corpus)
+p <- all_docs_word_plot(sample_vector_corpus)
 print(p)
 ```
 
 
-### NGram Analysis
+### NGram Frequencies
+
+Let's load all the data sources into 1 corpus.
+
+```{r, echo=TRUE, cache=TRUE}
+docs <- load_sample_dircorpus()
+docs <- preprocess_entries(docs)
+```
 
 Here are top bigrams.
 ```{r, echo=TRUE, cache=TRUE}
-p <- ngrams_per_source_plot(sample_vector_corpus, num_gram=2)
+ngram_2 <- get_docterm_matrix(docs, 2)
+p2 <- generate_word_frequency_plot(ngram_2$wf, "Top Bigrams for Sampled Text")
+print(p2)
 ```
 
 Here are top tri-grams
 ```{r, echo=TRUE, cache=TRUE}
-p <- ngrams_per_source_plot(sample_vector_corpus, num_gram=3)
+ngram_3 <- get_docterm_matrix(docs, 3)
+p3 <- generate_word_frequency_plot(ngram_3$wf, "Top Trigrams for Sampled Text")
+print(p3)
 ```
 
 Here are top 4-grams
 ```{r, echo=TRUE, cache=TRUE}
-p <- ngrams_per_source_plot(sample_vector_corpus, num_gram=4)
+ngram_4 <- get_docterm_matrix(docs, 4)
+p4 <- generate_word_frequency_plot(ngram_4$wf, "Top 4-grams for Sampled Text")
+print(p4)
 ```
 
-## NGram Language Model
+## Word Prediction using an NGrams
 
 We build a tree using the ngrams and compute MLE () using the  [Dirichlet-multinomial model](path/to/wikipedia). We use
 [node.tree](path/to/node.tree) which can build a tree from a data.frame. Now lets perform a search for "data".
 
 
-### Next Word Prediction for 'data'
-```{r, echo=TRUE, cache=TRUE}
+### Word Prediction for: 'data'
+```{r, echo=FALSE, cache=TRUE}
 docs <- load_sample_dircorpus()
 docs <- preprocess_entries(docs)
 ngram_tree <- ngram_language_modeling(docs)
-plot_tree_for_report(ngram_tree)
+plot_tree_for_report(ngram_tree, title="Tree Lookup for: data")
 ```
 
 Here are the maximum likelihood estimates. They show 6% likelihood that entry will be the next word: "data entry" has a frequency = 12 and "data" has a frequency of 198 - so the maximimum likelihood estimate is `r round((12/198)*100, digits=1)`%.
@@ -115,35 +133,18 @@ results <- perform_search(ngram_tree, c("data"))
 print(results)
 ```
 
-### Next Word Prediction for 'data entry'
+### Word Prediction for: 'data entry'
 
 Then if we query for "data entry", we search the tree the nodes "data" then "entry" and we will recommend the words "just" and "respond".
 
-```{r, echo=TRUE, cache=TRUE}
-plot_tree_for_report(ngram_tree, highlight_child = TRUE)
+```{r, echo=FALSE, cache=TRUE}
+plot_tree_for_report(ngram_tree, highlight_child = TRUE, title="Tree Lookup for: data entry")
 ```
 
 ```{r, echo=TRUE, cache=FALSE}
 results <- perform_search(ngram_tree, c("data", "entry"))
 print(results)
 ```
-
-<!-- ### Predicting the Next Word using the Maximum Likelihood -->
-<!-- To perform prediction, will calculate the maximum likelihood estimate (MLE) simply using the child nodes divided by the frequency of the parent. -->
-
-<!-- ```{r, echo=TRUE, cache=FALSE} -->
-<!--   results <- perform_search(ngram_tree, c("data")) -->
-<!--   print("Predict next word after typing: 'data'") -->
-<!--   print(results) -->
-<!-- ``` -->
-
-<!-- Search for "data entry" -->
-
-<!-- ```{r, echo=TRUE, cache=FALSE} -->
-<!-- print("Predict next word after typing: 'data entry'") -->
-<!-- results <- perform_search(ngram_tree, c("data", "entry")) -->
-<!-- print(results) -->
-<!-- ``` -->
 
 ### Next Steps
 
