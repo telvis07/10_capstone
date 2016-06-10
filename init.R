@@ -19,7 +19,7 @@ reinit_environment <- function() {
     # datums$df_ngram_4 <- readRDS("data/pruned_50p_term_doc_matrix_4_ngram_df.rds")
     # datums$df_ngram_4 <- mutate(datums$df_ngram_4, 
     #                             word=as.character(word))
-    # datums$all_df <- c(datums$df_ngram_2,
+    # datums$all_df <- rbind(datums$df_ngram_2,
     #                    datums$df_ngram_3,
     #                    datums$df_ngram_4)
 

@@ -29,7 +29,7 @@ tree_single_word <- function(min_frequency=10) {
   ngram_tree
 }
 
-build_tree <- function(all_data, min_frequency=10) {
+build_tree <- function(all_ngram_df) {
   # tmp <- system.time({
   #   print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
   #   all_data <- filter(datums$df_ngram_all, freq > min_frequency)
@@ -40,9 +40,8 @@ build_tree <- function(all_data, min_frequency=10) {
   # rm(datums)
   
   tmp <- system.time({
-    all_data$pathString <- sapply(all_data$word, gen_path_string)
-    ngram_tree <- as.Node(all_data)
-    rm(all_data)
+    all_ngram_df$pathString <- sapply(all_ngram_df$word, gen_path_string)
+    ngram_tree <- as.Node(all_ngram_df)
   })
   print(tmp)
   
@@ -59,10 +58,8 @@ build_tree <- function(all_data, min_frequency=10) {
   ngram_tree
 }
 
-
-
 gen_path_string <- function (x) {
-  paste("root", gsub(" ", "/", x), sep="/")
+  paste("start", gsub(" ", "/", x), sep="/")
 }
 
 fun_with_trees <- function() {

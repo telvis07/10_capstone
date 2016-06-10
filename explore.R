@@ -1,30 +1,13 @@
 library(ggplot2)
 library(gridExtra)
-
 source("sample_data.R")
-
-twitter_word_plot <- function(twitter_grams) {
-  # get frequencies
-  tbl <- table(twitter_grams$wf$freq)
-  frequency_counts <- as.data.frame(tbl)
-  frequency_counts$Var1 <- as.numeric(frequency_counts$Var1)
-  
-  # frequency plot
-  obj <- ggplot(frequency_counts, aes(Var1, Freq)) +
-    geom_bar(stat="identity") +
-    labs(x="Word Frequency") +
-    labs(y="Number of words with frequency") +
-    scale_x_continuous(breaks=seq(0,max(frequency_counts$Var1),25))
-  print(obj)
-}
+source("modeling.R")
 
 do_explore_per_data_source <- function() {
   # twitter data
   twitter <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
   blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
   news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
-  
-
   
   twitter <- preprocess_entries(twitter, save_file="data/processed_twitter_sample_corpus.rds")
   blogs <- preprocess_entries(blogs, save_file="data/processed_blogs_sample_corpus.rds")
@@ -60,51 +43,93 @@ do_explore_per_data_source <- function() {
   print(content_stats_df)
   
   # get frequencies
-  tbl <- table(twitter_grams$wf$freq)
-  frequency_counts <- as.data.frame(tbl)
+  twitter_word_plot(twitter_grams = twitter_grams)
   
-  # frequency plot
-  # obj <- qplot(frequency_counts$Freq, frequency_counts$Var1)
-  obj <- ggplot(twitter_grams$wf, aes(word, freq)) +
-    geom_bar(stat="identity") +
-    labs(x="Word Frequency") +
-    labs(y="Number of words with frequency")
-  # # TODO
-  # # Set tick marks on y axis
-  # # a tick mark is shown on every 5
-  # p + scale_y_continuous(breaks=seq(0,40,5))
-  # 
-  # # Tick marks can be spaced randomly
-  # p + scale_y_continuous(breaks=c(5,7.5, 20, 25))
-  # 
-  # # Remove tick mark labels and gridlines
-  # p + scale_y_continuous(breaks=NULL)
+  # ngrams per source
   
-  print(obj)
-  
-  # twitter <- preprocess_entries(twitter, save_file="data/processed_twitter_sample_corpus.rds")
-  # blogs <- preprocess_entries(blogs, save_file="data/processed_blogs_sample_corpus.rds")
-  # news <- preprocess_entries(news, save_file="data/processed_news_sample_corpus.rds")
-  # 
-  # #
-  # twitter_grams <- get_docterm_matrix(twitter, 2)
-  # blogs_grams <- get_docterm_matrix(blogs, 2)
-  # news_grams <- get_docterm_matrix(news, 2)
-  # 
-  # # # ngram top words
-  # p2 <- generate_word_frequency_plot(twitter_grams$wf)
-  # p3 <- generate_word_frequency_plot(blogs_grams$wf)
-  # p4 <- generate_word_frequency_plot(news_grams$wf)
-  # p <- grid.arrange(p2, p3, p4, ncol=3, top="Top Words by Source")
 }
 
-do_explore <- function(docs=NULL) {
+ngrams_per_source <- function(twitter, blogs, news, num_gram=2) {
+  twitter_grams <- get_docterm_matrix(twitter, num_gram)
+  blogs_grams <- get_docterm_matrix(blogs, num_gram)
+  news_grams <- get_docterm_matrix(news, num_gram)
+  title <- sprintf("Top %s-Grams by Source", num_gram)
+
+  # # ngram top words
+  p2 <- generate_word_frequency_plot(twitter_grams$wf)
+  p3 <- generate_word_frequency_plot(blogs_grams$wf)
+  p4 <- generate_word_frequency_plot(news_grams$wf)
+  p <- grid.arrange(p2, p3, p4, ncol=3, top=title)
+  print(p)
+}
+
+twitter_word_plot <- function(twitter_grams) {
+  # get frequencies
+  tbl <- table(twitter_grams$wf$freq)
+  frequency_counts <- as.data.frame(tbl)
+  frequency_counts$Var1 <- as.numeric(frequency_counts$Var1)
+  
+  # frequency plot
+  obj <- ggplot(frequency_counts, aes(Var1, Freq)) +
+    geom_bar(stat="identity") +
+    labs(x="Number of occurences in corpus (frequency)") +
+    labs(y="Number of words with identical frequency") +
+    labs(title="Twitter 1% Sample: Word Frequency vs. Number of Words at each Frequency") +
+    scale_x_continuous(breaks=seq(0,max(frequency_counts$Var1),25))
+  print(obj)
+}
+
+ngram_language_modeling <- function(docs=NULL) {
+  # How these probabilities are estimated is a matter of great interest in the area of
+  # language modeling. The most straightforward way is take a word history and count
+  # the different words which follow that word history. As language models are predictive
+  # models, one wants to model future possible word sequences given what was seen
+  # in training. This suggests a simple relative frequency as a probability estimate of a
+  # sequence of words, which is better known as the maximum likelihood estimator (see
+  #                                                                               [Manning and Sch¨utze, 1999]):
+  
+  
   # generate_sample_files()
   if (is.null(docs)) {
     docs <- load_sample_dircorpus()
     docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
   }
   
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  ngram_3 <- get_docterm_matrix(docs, 3)
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  
+  # Combine all the word frequency data.frames
+  ngram_all_df <- rbind(ngram_2$wf,
+                        ngram_3$wf,
+                        ngram_4$wf)
+  
+  # now let's filter for ngrams that start with "data"
+  starts_with_data_ngram_df <- filter(ngram_all_df, grepl("^data ", word) 
+                                      & freq > 3)
+  # https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html
+  ngram_tree <- build_tree(starts_with_data_ngram_df)
+  
+  # 
+  plot_tree_for_report(ngram_tree)
+}
+
+plot_tree_for_report <- function(ngram_tree) {
+  SetGraphStyle(ngram_tree, rankdir = "TB")
+  SetEdgeStyle(ngram_tree, arrowhead = "vee", color = "grey35", penwidth = 2)
+  SetNodeStyle(ngram_tree, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow", 
+               fontname = "helvetica", tooltip = GetDefaultTooltip)
+  SetNodeStyle(ngram_tree$data$entry, fillcolor = "LightBlue", penwidth = "5px")
+  plot(ngram_tree)
+}
+
+do_explore_ngrams <- function(docs=NULL) {
+  # generate_sample_files()
+  if (is.null(docs)) {
+    docs <- load_sample_dircorpus()
+    docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
+  }
+
   # ngram top words
   ngram_2 <- get_docterm_matrix(docs, 2)
   p2 <- generate_word_frequency_plot(ngram_2$wf, 2)
