@@ -23,8 +23,8 @@ In a nutshell, here's a summary of the data analysis performed in this report.
 2. Extract a 1% subsample of the data.
 3. Preprocess the data to remove stopword, convert to lowercase and other tasks
 4. Generate 2-grams, 3-grams and 4-grams.
-5. Build a language model where a ngram (i.e. phrase) is a path for a `search node` in a tree.
-6. Calculate the maximum likelihood estimate (MLE) using the children of the `search node`.
+5. Build a n-gram language model using a suffix tree
+6. Predict the next word by calculating the maximum likelihood estimate (MLE) for all suffixes for a search string.
 
 
 ```{r, echo=FALSE,message=FALSE}
@@ -147,9 +147,9 @@ print(p4)
 
 ## Language Model for Word Prediction
 
-We will build a tree using 
-We build a tree using the ngrams and compute MLE () using the  [Dirichlet-multinomial model](path/to/wikipedia). We use
-[node.tree](path/to/node.tree) which can build a tree from a data.frame. Now lets perform a search for "data".
+A suffix tree is a data structure where an interior node represents a "root" character sequence from the training data and child node represents a suffix of that root. For our implementation, each node represents a word and an arc (e.g. search path) represents a bigram, trigram or 4-gram. Each node has an associated count that represents the ngram frequency. We use these counts to predict the next word by calculating the maximimum likelihood estimate (MLE). 
+
+For example: in the figure below we show a suffix tree for ngrams that begin with the word `data`. The first level (w1) of the tree corresponds to the the 1-gram "data". The second level (w2) represents all bigrams whose root is "data" - such as "data entry" or "data streams". The same applies to the third (w3) and fourth (w4) levels for trigrams and 4-grams respectively.
 
 
 ### Word Prediction for: 'data'
@@ -160,7 +160,8 @@ ngram_tree <- ngram_language_modeling(docs)
 plot_tree_for_report(ngram_tree, title="Tree Lookup for: data")
 ```
 
-Here are the maximum likelihood estimates. They show 6% likelihood that entry will be the next word: "data entry" has a frequency = 12 and "data" has a frequency of 198 - so the maximimum likelihood estimate is `r round((12/198)*100, digits=1)`%.
+Each node contains the ngram frequency count found during training. We calcuate the MLE by dividing the `P_mle(w2|w1) = C(w2)/C(w1)`. For "data", C(w1) = 198. C(w2) for "entry" is 12 and "streams" is 10. `P_mle(entry|data)` = 12/198 = 0.06 = 6%. For "streams", `P_mle(streams|data)` = 10/198 = 0.05 = 5%. Therefore, this language model would predict that "entry" is the most likely next word.
+
 
 ```{r, echo=TRUE, cache=TRUE}
 results <- perform_search(ngram_tree, c("data"))
@@ -170,6 +171,7 @@ print(results)
 ### Word Prediction for: 'data entry'
 
 Then if we query for "data entry", we search the tree the nodes "data" then "entry" and we will recommend the words "just" and "respond".
+We calcuate the MLE by dividing the `P_mle(w2|w1) = C(w2)/C(w1)`. For "data", C(w1) = 198. C(w2) for "entry" is 12 and "streams" is 10. `P_mle(entry|data)` = 12/198 = 0.06 = 6%. For "streams", `P_mle(streams|data)` = 10/198 = 0.05 = 5%. Therefore, this language model would predict that "entry" is the most likely next word.
 
 ```{r, echo=FALSE, cache=TRUE}
 plot_tree_for_report(ngram_tree, highlight_child = TRUE, title="Tree Lookup for: data entry")
