@@ -68,7 +68,7 @@ total_counts_df <- data.frame(
 
 ```{r echo=FALSE, fig.align='center', fig.cap="Raw Data Line Counts"}
 kable(total_counts_df, 
-      row.names=TRUE, 
+      row.names=FALSE, 
       format = "markdown", 
       caption="Table 1: Raw Data Line Counts")
 ```
