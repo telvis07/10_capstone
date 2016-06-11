@@ -102,7 +102,24 @@ For example: in the figure below we show a suffix tree for ngrams that begin wit
 <!--html_preserve--><div id="htmlwidget-296" style="width:672px;height:480px;" class="grViz html-widget"></div>
 <script type="application/json" data-for="htmlwidget-296">{"x":{"diagram":"digraph {\n\ngraph [rankdir = \"TB\", label = \"Tree Lookup for: data\", fontsize = \"40\"]\n\nnode [style = \"filled,rounded\", shape = \"box\", fillcolor = \"GreenYellow\", fontname = \"helvetica\"]\n\nedge [arrowhead = \"vee\", color = \"grey35\", penwidth = \"2\"]\n\n  \"start\" [label = \"start\", tooltip = \"- name: start\"] \n  \"data\" [label = \"data\", tooltip = \"- freq: 198\"] \n  \"entry\" [label = \"entry\", tooltip = \"- freq: 12\n- word: data entry\"] \n  \"just\" [label = \"just\", tooltip = \"- freq: 6\n- word: data entry just\"] \n  \"overwhelming\" [label = \"overwhelming\", tooltip = \"- freq: 6\n- word: data entry just overwhelming\"] \n  \"respond\" [label = \"respond\", tooltip = \"- freq: 6\n- word: data entry respond\"] \n  \"emails\" [label = \"emails\", tooltip = \"- freq: 6\n- word: data entry respond emails\"] \n  \"streams\" [label = \"streams\", tooltip = \"- freq: 10\n- word: data streams\"] \n  \"live\" [label = \"live\", tooltip = \"- freq: 10\n- word: data streams live\"] \n  \"race\" [label = \"race\", tooltip = \"- freq: 10\n- word: data streams live race\"] \n  \"recovery\" [label = \"recovery\", tooltip = \"- freq: 8\n- word: data recovery\"] \n  \"software\" [label = \"software\", tooltip = \"- freq: 8\n- word: data recovery software\"] \n  \"showed\" [label = \"showed\", tooltip = \"- freq: 8\n- word: data recovery software showed\"] \n  \"dating\" [label = \"dating\", tooltip = \"- freq: 7\n- word: data dating\"] \n  \"average\" [label = \"average\", tooltip = \"- freq: 7\n- word: data dating average\"] \n  \"year\" [label = \"year\", tooltip = \"- freq: 7\n- word: data dating average year\"] \n  \"personalize\" [label = \"personalize\", tooltip = \"- freq: 7\n- word: data personalize\"] \n  \"user\" [label = \"user\", tooltip = \"- freq: 7\n- word: data personalize user\"] \n  \"interface\" [label = \"interface\", tooltip = \"- freq: 7\n- word: data personalize user interface\"] \n  \"records\" [label = \"records\", tooltip = \"- freq: 7\n- word: data records\"] \n  \"show\" [label = \"show\", tooltip = \"- freq: 7\n- word: data records show\"] \n  \"since\" [label = \"since\", tooltip = \"- freq: 7\n- word: data records show since\"] \n  \"allowance\" [label = \"allowance\", tooltip = \"- freq: 6\n- word: data allowance\"] \n  \"htc\" [label = \"htc\", tooltip = \"- freq: 6\n- word: data allowance htc\"] \n  \"one\" [label = \"one\", tooltip = \"- freq: 6\n- word: data allowance htc one\"] \n  \"bus\" [label = \"bus\", tooltip = \"- freq: 5\n- word: data bus\"] \n  \"inverted\" [label = \"inverted\", tooltip = \"- freq: 5\n- word: data bus inverted\"] \n  \"inversion\" [label = \"inversion\", tooltip = \"- freq: 5\n- word: data bus inverted inversion\"] \n  \"soon\" [label = \"soon\", tooltip = \"- freq: 4\n- word: data soon\"] \n  \"much\" [label = \"much\", tooltip = \"- freq: 4\n- word: data soon much\"] \n  \"going\" [label = \"going\", tooltip = \"- freq: 4\n- word: data soon much going\"] \n\"start\"->\"data\"\n\"data\"->\"entry\"\n\"data\"->\"streams\"\n\"data\"->\"recovery\"\n\"data\"->\"dating\"\n\"data\"->\"personalize\"\n\"data\"->\"records\"\n\"data\"->\"allowance\"\n\"data\"->\"bus\"\n\"data\"->\"soon\"\n\"entry\"->\"just\"\n\"entry\"->\"respond\"\n\"streams\"->\"live\"\n\"recovery\"->\"software\"\n\"dating\"->\"average\"\n\"personalize\"->\"user\"\n\"records\"->\"show\"\n\"allowance\"->\"htc\"\n\"bus\"->\"inverted\"\n\"soon\"->\"much\"\n\"just\"->\"overwhelming\"\n\"respond\"->\"emails\"\n\"live\"->\"race\"\n\"software\"->\"showed\"\n\"average\"->\"year\"\n\"user\"->\"interface\"\n\"show\"->\"since\"\n\"htc\"->\"one\"\n\"inverted\"->\"inversion\"\n\"much\"->\"going\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
-Each node contains the ngram frequency count from the training data. We calculate the MLE as `P_mle(w2|w1) = C(w1...w2)/C(w1)`. The frequency count for "data" is 198. The frequency count for "entry" is 12 and "streams" is 10. The probability of "data entry" is `P_mle(entry|data) = 12/198 = 0.06 = 6%`. The probability for "data streams" is `P_mle(streams|data) = 10/198 = 0.05 = 5%`. Therefore, the language model would predict that "entry" is the most likely next word.
+Each node contains the ngram frequency count from the training data.The frequency count for "data" is 198. The frequency count for "entry" is 12 and "streams" is 10. We calculate the MLE as: 
+
+$$
+P_{mle}(w2|w1) = \frac{C(w1...w2)}{C(w1)}
+$$
+
+The probability of "data entry" is:
+
+$$
+P_{mle}(entry|data) = \frac{12}{198} = 0.06 = 6\% 
+$$
+
+The probability for "data streams" is:
+$$
+P_{mle}(streams|data) = \frac{10}{198} = 0.05 = 5\%
+$$
+
+Therefore, the language model would predict that "entry" is the most likely next word.
 
 
 ```r
@@ -124,12 +141,30 @@ print(results)
 
 ### Word Prediction for: 'data entry'
 
-Now let's predict the next word after: "data entry", 
-
-We calculate the MLE as: `P_mle(w3|w1...w2) = C(w1...w3)/C(w2)`. The frequency count for "data entry" is 12. The frequency count for "just" is 6 and "respond" is 6. The probability of "data entry just" is `P_mle(just|data entry) = 6/12 = 0.50 = 50%`. The probablility of "data entry respond" is `P_mle(respond|data entry) = 6/12 = 0.50 = 50%`. The language model would predict that "just" and "respond"" are equally likely to be the next word.
+Now let's predict the next word after: "data entry". The frequency count for "data entry" is 12. The frequency count for "just" is 6 and "respond" is 6. 
 
 <!--html_preserve--><div id="htmlwidget-9096" style="width:672px;height:480px;" class="grViz html-widget"></div>
 <script type="application/json" data-for="htmlwidget-9096">{"x":{"diagram":"digraph {\n\ngraph [rankdir = \"TB\", label = \"Tree Lookup for: data entry\", fontsize = \"40\"]\n\nnode [style = \"filled,rounded\", shape = \"box\", fillcolor = \"GreenYellow\", fontname = \"helvetica\"]\n\nedge [arrowhead = \"vee\", color = \"grey35\", penwidth = \"2\"]\n\n  \"start\" [label = \"start\", tooltip = \"- name: start\"] \n  \"data\" [label = \"data\", tooltip = \"- freq: 198\"] \n  \"entry\" [label = \"entry\", fillcolor = \"LightBlue\", tooltip = \"- freq: 12\n- word: data entry\", penwidth = \"5px\"] \n  \"just\" [label = \"just\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry just\", penwidth = \"5px\"] \n  \"overwhelming\" [label = \"overwhelming\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry just overwhelming\", penwidth = \"5px\"] \n  \"respond\" [label = \"respond\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry respond\", penwidth = \"5px\"] \n  \"emails\" [label = \"emails\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry respond emails\", penwidth = \"5px\"] \n  \"streams\" [label = \"streams\", tooltip = \"- freq: 10\n- word: data streams\"] \n  \"live\" [label = \"live\", tooltip = \"- freq: 10\n- word: data streams live\"] \n  \"race\" [label = \"race\", tooltip = \"- freq: 10\n- word: data streams live race\"] \n  \"recovery\" [label = \"recovery\", tooltip = \"- freq: 8\n- word: data recovery\"] \n  \"software\" [label = \"software\", tooltip = \"- freq: 8\n- word: data recovery software\"] \n  \"showed\" [label = \"showed\", tooltip = \"- freq: 8\n- word: data recovery software showed\"] \n  \"dating\" [label = \"dating\", tooltip = \"- freq: 7\n- word: data dating\"] \n  \"average\" [label = \"average\", tooltip = \"- freq: 7\n- word: data dating average\"] \n  \"year\" [label = \"year\", tooltip = \"- freq: 7\n- word: data dating average year\"] \n  \"personalize\" [label = \"personalize\", tooltip = \"- freq: 7\n- word: data personalize\"] \n  \"user\" [label = \"user\", tooltip = \"- freq: 7\n- word: data personalize user\"] \n  \"interface\" [label = \"interface\", tooltip = \"- freq: 7\n- word: data personalize user interface\"] \n  \"records\" [label = \"records\", tooltip = \"- freq: 7\n- word: data records\"] \n  \"show\" [label = \"show\", tooltip = \"- freq: 7\n- word: data records show\"] \n  \"since\" [label = \"since\", tooltip = \"- freq: 7\n- word: data records show since\"] \n  \"allowance\" [label = \"allowance\", tooltip = \"- freq: 6\n- word: data allowance\"] \n  \"htc\" [label = \"htc\", tooltip = \"- freq: 6\n- word: data allowance htc\"] \n  \"one\" [label = \"one\", tooltip = \"- freq: 6\n- word: data allowance htc one\"] \n  \"bus\" [label = \"bus\", tooltip = \"- freq: 5\n- word: data bus\"] \n  \"inverted\" [label = \"inverted\", tooltip = \"- freq: 5\n- word: data bus inverted\"] \n  \"inversion\" [label = \"inversion\", tooltip = \"- freq: 5\n- word: data bus inverted inversion\"] \n  \"soon\" [label = \"soon\", tooltip = \"- freq: 4\n- word: data soon\"] \n  \"much\" [label = \"much\", tooltip = \"- freq: 4\n- word: data soon much\"] \n  \"going\" [label = \"going\", tooltip = \"- freq: 4\n- word: data soon much going\"] \n\"start\"->\"data\"\n\"data\"->\"entry\"\n\"data\"->\"streams\"\n\"data\"->\"recovery\"\n\"data\"->\"dating\"\n\"data\"->\"personalize\"\n\"data\"->\"records\"\n\"data\"->\"allowance\"\n\"data\"->\"bus\"\n\"data\"->\"soon\"\n\"entry\"->\"just\"\n\"entry\"->\"respond\"\n\"streams\"->\"live\"\n\"recovery\"->\"software\"\n\"dating\"->\"average\"\n\"personalize\"->\"user\"\n\"records\"->\"show\"\n\"allowance\"->\"htc\"\n\"bus\"->\"inverted\"\n\"soon\"->\"much\"\n\"just\"->\"overwhelming\"\n\"respond\"->\"emails\"\n\"live\"->\"race\"\n\"software\"->\"showed\"\n\"average\"->\"year\"\n\"user\"->\"interface\"\n\"show\"->\"since\"\n\"htc\"->\"one\"\n\"inverted\"->\"inversion\"\n\"much\"->\"going\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
+
+We calculate the MLE as: 
+
+$$
+`P_mle(w3|w1...w2) = \frac{C(w1...w3)}{C(w2)}
+$$
+
+The probability of "data entry just" is:
+
+$$
+P_{mle}(just|data entry) = \frac{6}{12} = 0.50 = 50\%
+$$
+
+The probablility of "data entry respond" is:
+
+$$
+P_mle(respond|data entry) = \frac{6}{12} = 0.50 = 50\%
+$$
+
+The language model would predict that "just" and "respond"" are equally likely to be the next word.
 
 
 ```r

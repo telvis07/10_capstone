@@ -6,6 +6,7 @@ output:
   html_document:
     keep_md: yes
   pdf_document: default
+widgets     : [mathjax]
 
 ---
 
@@ -159,7 +160,24 @@ ngram_tree <- ngram_language_modeling(docs)
 plot_tree_for_report(ngram_tree, title="Tree Lookup for: data")
 ```
 
-Each node contains the ngram frequency count from the training data. We calculate the MLE as `P_mle(w2|w1) = C(w1...w2)/C(w1)`. The frequency count for "data" is 198. The frequency count for "entry" is 12 and "streams" is 10. The probability of "data entry" is `P_mle(entry|data) = 12/198 = 0.06 = 6%`. The probability for "data streams" is `P_mle(streams|data) = 10/198 = 0.05 = 5%`. Therefore, the language model would predict that "entry" is the most likely next word.
+Each node contains the ngram frequency count from the training data.The frequency count for "data" is 198. The frequency count for "entry" is 12 and "streams" is 10. We calculate the MLE as: 
+
+$$
+P_{mle}(w2|w1) = \frac{C(w1...w2)}{C(w1)}
+$$
+
+The probability of "data entry" is:
+
+$$
+P_{mle}(entry|data) = \frac{12}{198} = 0.06 = 6\% 
+$$
+
+The probability for "data streams" is:
+$$
+P_{mle}(streams|data) = \frac{10}{198} = 0.05 = 5\%
+$$
+
+Therefore, the language model would predict that "entry" is the most likely next word.
 
 ```{r, echo=TRUE, cache=TRUE}
 results <- perform_search(ngram_tree, c("data"))
@@ -168,13 +186,31 @@ print(results)
 
 ### Word Prediction for: 'data entry'
 
-Now let's predict the next word after: "data entry", 
-
-We calculate the MLE as: `P_mle(w3|w1...w2) = C(w1...w3)/C(w2)`. The frequency count for "data entry" is 12. The frequency count for "just" is 6 and "respond" is 6. The probability of "data entry just" is `P_mle(just|data entry) = 6/12 = 0.50 = 50%`. The probablility of "data entry respond" is `P_mle(respond|data entry) = 6/12 = 0.50 = 50%`. The language model would predict that "just" and "respond"" are equally likely to be the next word.
+Now let's predict the next word after: "data entry". The frequency count for "data entry" is 12. The frequency count for "just" is 6 and "respond" is 6. 
 
 ```{r, echo=FALSE, cache=TRUE}
 plot_tree_for_report(ngram_tree, highlight_child = TRUE, title="Tree Lookup for: data entry")
 ```
+
+We calculate the MLE as: 
+
+$$
+`P_mle(w3|w1...w2) = \frac{C(w1...w3)}{C(w2)}
+$$
+
+The probability of "data entry just" is:
+
+$$
+P_{mle}(just|data entry) = \frac{6}{12} = 0.50 = 50\%
+$$
+
+The probablility of "data entry respond" is:
+
+$$
+P_mle(respond|data entry) = \frac{6}{12} = 0.50 = 50\%
+$$
+
+The language model would predict that "just" and "respond"" are equally likely to be the next word.
 
 ```{r, echo=TRUE, cache=FALSE}
 results <- perform_search(ngram_tree, c("data", "entry"))
