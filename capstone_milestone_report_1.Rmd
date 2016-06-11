@@ -11,9 +11,9 @@ output:
 
 ## Executive Summary
 
-[Swiftkey](url/to/switftkey) develop a word prediction application that is used while typing into a keyboards on a mobile keyboard. When the user types: "I went to the " : the application presents three options for what the next word might be. For example, the three words might be `gym, store, restaurant`.
+[Swiftkey](https://swiftkey.com/en) is a text messaging application that predicts the next word as you type a message. When the user types: `"I went to the "` : the application presents three options for what the next word might be. For example, the three words might be `gym, store, restaurant`.
 
-In this project, we use `R` to build a predictive model using text data provided by the [Data Science Capstone course](path/to/capstone). The data consists of text from 'Blogs', 'News' and 'Twitter' totaling more than 4 million lines and `???` unique words.
+In this project, we use `R` text mining tools to build a application that predicts the next word entered into an [shiny application](http://shiny.rstudio.com/). We use data scraped from blogs, twitter and news sites to build a language model to perform prediction. We predict the next word by calculating the [maximum likelihood estimate](https://en.wikipedia.org/wiki/Maximum_likelihood) (MLE) based on the language model.
 
 ### TL;DR
 
@@ -21,9 +21,10 @@ In a nutshell, here's a summary of the data analysis performed in this report.
 
 1. Load the raw data.
 2. Extract a 1% subsample of the data.
-3. Preprocess the data to remove stopword, convert to lowercase and other items.
+3. Preprocess the data to remove stopword, convert to lowercase and other tasks
 4. Generate 2-grams, 3-grams and 4-grams.
-5. Present a technique to use the [Dirichlet-multinomial model](path/to/wikipedia) as a language model.
+5. Build a language model where a ngram (i.e. phrase) is a path for a `search node` in a tree.
+6. Calculate the maximum likelihood estimate (MLE) using the children of the `search node`.
 
 
 ```{r, echo=FALSE,message=FALSE}
@@ -39,31 +40,41 @@ source("modeling.R")
 source("sample_data.R")
 ```
 
+## Complete Dataset
+The [Data Science Capstone Course](https://www.coursera.org/learn/data-science-project/home/welcome) provided text data from 3 data sources: `blogs`, `twitter` and `news`. The table below shows the number of lines from data source.
 
-<!-- First, I fetched the data from the URL provided by the course. Here are line counts per file. -->
-
-<!-- ``` -->
-<!-- $ wc -l data/final/en_US/*.txt -->
-<!--   899288 data/final/en_US/en_US.blogs.txt -->
-<!--  1010242 data/final/en_US/en_US.news.txt -->
-<!--  2360148 data/final/en_US/en_US.twitter.txt -->
-<!--  4269678 total -->
-<!-- ``` -->
-
-## Explore the Data
-First, we sample 1% of the lines in the files in order to speed up the data exploration. The implementation is in [sample_capstone_data in sample_data.R](./sample_data.R). We use [tm R package](path/to/tm.html) to load each sample file for analysis. 
-
-```{r, echo=FALSE,cache=TRUE}
-sample_vector_corpus <- get_sample_datums_vector_corpus()
-content_stats_df <- do_explore_per_data_source(sample_vector_corpus)
+``` {r, echo=FALSE,cache=TRUE}
+total_counts_df <- data.frame(
+  filename = c(
+    "en_US.blogs.txt",
+    "en_US.news.txt",
+    "en_US.twitter.txt",
+    "Total"
+  ),
+  line_count = c(
+    899288,
+    1010242,
+    2360148,
+    4269678
+  )
+)
+# $ wc -l data/final/en_US/*.txt
+#   899288 data/final/en_US/en_US.blogs.txt
+#  1010242 data/final/en_US/en_US.news.txt
+#  2360148 data/final/en_US/en_US.twitter.txt
+#  4269678 total
 ```
 
-```{r echo=FALSE, fig.align='center', fig.cap="Sampled Text Summary"}
-kable(content_stats_df, row.names=TRUE, format = "markdown", caption="Table 1: Sampled Text Summary")
+
+```{r echo=FALSE, fig.align='center', fig.cap="Raw Data Line Counts"}
+kable(total_counts_df, 
+      row.names=TRUE, 
+      format = "markdown", 
+      caption="Table 1: Raw Data Line Counts")
 ```
 
-### Text Cleaning
-We perform the following text processing steps prior to parsing ngrams.
+##t Transforming Unstructured Text for Analysis
+We use [a framework for text mining applications within R](https://cran.r-project.org/web/packages/tm/index.html) to transform the unstructured text to a structured document-by-term matrix format required for analysis. The first step is "clean" the text prior with a series of text processing functions. We use the following preprocessing steps.
 
 - Remove all Punctuation
 - Remove all Numbers
@@ -71,6 +82,28 @@ We perform the following text processing steps prior to parsing ngrams.
 - Remove English Stopwords
 - Strip extra whitespace
 - Remove Profanity
+
+Second, we tokenize the text into [ngrams](https://en.wikipedia.org/wiki/N-gram). For our analysis, a `gram` equals a whitespace delimited sequence of characters corresponding to an English word. The `N` in ngram corresponds to the number of  words considered to be part of the same unit. For example: a 1-gram is `new`, 2-gram is `new york`, 3-gram is `new york city` and a 4-gram is `new york city police`.
+
+Finally, we build a document-by-term matrix by transforming the ngrams to a [bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model). The columns in a docterm matrix each unique ngram. The row represent a document and the frequency that each ngram appears in the document. 
+
+## Sampling the Dataset
+The `r total_counts_df[4,]$line_count` lines from the complete dataset can be memory intensive for the text mining tools and slow the analysis. To speed things up, we subsample `1%` from the complete dataset and then work with the subsampled data for exploration and modeling. The subsampling implementation is in `Appendix 1`. 
+
+
+
+```{r, echo=FALSE,cache=TRUE}
+sample_vector_corpus <- get_sample_datums_vector_corpus()
+content_stats_df <- do_explore_per_data_source(sample_vector_corpus)
+```
+
+```{r echo=FALSE, fig.align='center', fig.cap="Sampled Text Summary"}
+kable(content_stats_df, row.names=FALSE, format = "markdown", caption="Table 2: Sampled Text Summary")
+```
+
+The table above provides summary statistics for the sampled data. We see that the `twitter` data has fewer unique words - which makes sense given the 140-character limit. We also see that the `mean` word frequency is nearly twice the `median` frequency 
+
+
 
 ### Word Frequencies
 
@@ -152,6 +185,31 @@ print(results)
 - Deploy the ngram tree to the server-side of an Shiny Application.
 
 
+# Appendix
+
+## Appendix 1: Subsampling Code
+
+This code collects a 1% sample using a "coin flip" to decide which lines to choose.
+
+```{r echo=TRUE,eval=FALSE}
+# sample the datasci dir
+sample_capstone_data <- function(fn, outfn, sample_len=0.01) {
+  print(sprintf("Reading %s", fn))
+  lines <- readLines(fn)
+  set.seed(123)
+  print(sprintf("Read %s Length %s", fn, length(lines)))
+  lines_sample <- lines[rbinom(length(lines)*sample_len, length(lines), 0.5)]
+  print(sprintf("Writing %s. Length %s", outfn, length(lines_sample)))
+  write.csv(lines_sample, file=outfn, row.names=FALSE, col.names=FALSE)
+}
+
+sample_capstone_data("./data/final/en_US/en_US.twitter.txt",
+                     "./data/final/en_US/sample/en_US.twitter.txt")
+sample_capstone_data("./data/final/en_US/en_US.blogs.txt",
+                     "./data/final/en_US/sample/en_US.blogs.txt")
+sample_capstone_data("./data/final/en_US/en_US.news.txt",
+                     "./data/final/en_US/sample/en_US.news.txt")
+```
 
 
 
