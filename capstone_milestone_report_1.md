@@ -36,7 +36,7 @@ The [Data Science Capstone Course](https://www.coursera.org/learn/data-science-p
 |3  |en_US.twitter.txt |    2360148|
 |4  |Total             |    4269678|
 
-##t Transforming Unstructured Text for Analysis
+## Processing Unstructured Text for Analysis
 We use [a framework for text mining applications within R](https://cran.r-project.org/web/packages/tm/index.html) to transform the unstructured text to a structured document-by-term matrix format required for analysis. The first step is "clean" the text prior with a series of text processing functions. We use the following preprocessing steps.
 
 - Remove all Punctuation
@@ -51,8 +51,7 @@ Second, we tokenize the text into [ngrams](https://en.wikipedia.org/wiki/N-gram)
 Finally, we build a document-by-term matrix by transforming the ngrams to a [bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model). The columns in a docterm matrix each unique ngram. The row represent a document and the frequency that each ngram appears in the document. 
 
 ## Sampling the Dataset
-The 4.269678\times 10^{6} lines from the complete dataset can be memory intensive for the text mining tools and slow the analysis. To speed things up, we subsample `1%` from the complete dataset and then work with the subsampled data for exploration and modeling. The subsampling implementation is in `Appendix 1`. 
-
+The `4,269,678` lines from the complete dataset can be memory intensive for the text mining tools and slow the analysis. To speed things up, we subsample `1%` of the complete dataset and then work with the subsampled data for exploration and modeling. The subsampling implementation is in `Appendix 1`. 
 
 
 
@@ -64,32 +63,15 @@ The 4.269678\times 10^{6} lines from the complete dataset can be memory intensiv
 |blogs   |      8993|            12414|             15|                6|
 |news    |     10103|            12850|             15|                7|
 
-The table above provides summary statistics for the sampled data. We see that the `twitter` data has fewer unique words - which makes sense given the 140-character limit. We also see that the `mean` word frequency is nearly twice the `median` frequency 
 
 
+We see that the `mean` word frequency is nearly twice the `median` frequency for all data sources. The word frequency distribution has a [long tail](https://en.wikipedia.org/wiki/Long_tail) - as seen in the plot below. 
+937 of 22899 (4.1%) words cover 50% of all word instances in the dataset. The `mean` word frequency is heavily weighted by a few words that occur very frequently.
 
-### Word Frequencies
-
-For example, look at the word frequency distribution for the sample data
-
-
-```r
-p <- all_docs_word_plot(sample_vector_corpus)
-print(p)
-```
-
-![](capstone_milestone_report_1_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](capstone_milestone_report_1_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 
 ### NGram Frequencies
-
-Let's load all the data sources into 1 corpus.
-
-
-```r
-docs <- load_sample_dircorpus()
-docs <- preprocess_entries(docs)
-```
 
 Here are top bigrams.
 

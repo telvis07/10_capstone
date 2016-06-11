@@ -44,15 +44,15 @@ do_explore_per_data_source <- function(sample_vector_corpus) {
       nrow(blogs_grams$wf),
       nrow(news_grams$wf)
     ),
-    mean_word_freq = c(
-      round(mean(twitter_grams$wf$freq), 0),
-      round(mean(blogs_grams$wf$freq), 0),
-      round(mean(news_grams$wf$freq), 0)
-    ),
     median_word_freq = c(
       median(twitter_grams$wf$freq),
       median(blogs_grams$wf$freq),
       median(news_grams$wf$freq)
+    ),
+    mean_word_freq = c(
+      round(mean(twitter_grams$wf$freq), 0),
+      round(mean(blogs_grams$wf$freq), 0),
+      round(mean(news_grams$wf$freq), 0)
     )
   )
   content_stats_df
@@ -309,7 +309,7 @@ explore_ngram_data <- function(df, ngram_length=2) {
   # 0.939112054 0.039699598 0.009700753 0.004048329 0.002122727 0.001276024 
 }
 
-cover_percentage <- function(df) {
+cover_percentage_50_90 <- function(df) {
   # 3. How many unique words do you need in a frequency sorted dictionary 
   # to cover 50% of all word instances in the language? 90%?
   sums <- cumsum(df$freq)
@@ -335,6 +335,17 @@ cover_percentage <- function(df) {
   # [1] "38158860 of 42556490 (89.6663705112898%) cover 90% of word instances"
   #                           Type       Size    PrettySize Rows Columns
   # datums                    list 7545601208    [1] "7 Gb"    1      NA
+}
+
+cover_percentage <- function(df, instance_percent=0.50) {
+  # 3. How many unique words do you need in a frequency sorted dictionary 
+  # to cover 50% of all word instances in the language? 90%?
+  sums <- cumsum(df$freq)
+  cover_n <- which(sums > sum(df$freq) * instance_percent)[1]
+  ret = list(num_words=cover_n,
+             total_words=nrow(df),
+             percent_of_total_words=round(cover_n/nrow(df)*100, 1))
+  ret
 }
 
 

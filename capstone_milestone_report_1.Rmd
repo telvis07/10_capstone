@@ -73,7 +73,7 @@ kable(total_counts_df,
       caption="Table 1: Raw Data Line Counts")
 ```
 
-##t Transforming Unstructured Text for Analysis
+## Processing Unstructured Text for Analysis
 We use [a framework for text mining applications within R](https://cran.r-project.org/web/packages/tm/index.html) to transform the unstructured text to a structured document-by-term matrix format required for analysis. The first step is "clean" the text prior with a series of text processing functions. We use the following preprocessing steps.
 
 - Remove all Punctuation
@@ -88,8 +88,7 @@ Second, we tokenize the text into [ngrams](https://en.wikipedia.org/wiki/N-gram)
 Finally, we build a document-by-term matrix by transforming the ngrams to a [bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model). The columns in a docterm matrix each unique ngram. The row represent a document and the frequency that each ngram appears in the document. 
 
 ## Sampling the Dataset
-The `r total_counts_df[4,]$line_count` lines from the complete dataset can be memory intensive for the text mining tools and slow the analysis. To speed things up, we subsample `1%` from the complete dataset and then work with the subsampled data for exploration and modeling. The subsampling implementation is in `Appendix 1`. 
-
+The `4,269,678` lines from the complete dataset can be memory intensive for the text mining tools and slow the analysis. To speed things up, we subsample `1%` of the complete dataset and then work with the subsampled data for exploration and modeling. The subsampling implementation is in `Appendix 1`. 
 
 
 ```{r, echo=FALSE,cache=TRUE}
@@ -101,28 +100,23 @@ content_stats_df <- do_explore_per_data_source(sample_vector_corpus)
 kable(content_stats_df, row.names=FALSE, format = "markdown", caption="Table 2: Sampled Text Summary")
 ```
 
-The table above provides summary statistics for the sampled data. We see that the `twitter` data has fewer unique words - which makes sense given the 140-character limit. We also see that the `mean` word frequency is nearly twice the `median` frequency 
+```{r, echo=FALSE, cache=TRUE}
+docs <- load_sample_dircorpus()
+docs <- preprocess_entries(docs)
+all_corpus_grams <- get_docterm_matrix(docs, 1)
+cover_stats = cover_percentage(all_corpus_grams$wf, instance_percent=0.50)
+```
 
+We see that the `mean` word frequency is nearly twice the `median` frequency for all data sources. The word frequency distribution has a [long tail](https://en.wikipedia.org/wiki/Long_tail) - as seen in the plot below. 
+`r cover_stats$num_words` of `r cover_stats$total_words` (`r cover_stats$percent_of_total_words`%) words cover 50% of all word instances in the dataset. The `mean` word frequency is heavily weighted by a few words that occur very frequently.
 
-
-### Word Frequencies
-
-For example, look at the word frequency distribution for the sample data
-
-```{r, echo=TRUE, cache=TRUE}
+```{r, echo=FALSE, cache=TRUE}
 p <- all_docs_word_plot(sample_vector_corpus)
 print(p)
 ```
 
 
 ### NGram Frequencies
-
-Let's load all the data sources into 1 corpus.
-
-```{r, echo=TRUE, cache=TRUE}
-docs <- load_sample_dircorpus()
-docs <- preprocess_entries(docs)
-```
 
 Here are top bigrams.
 ```{r, echo=TRUE, cache=TRUE}
