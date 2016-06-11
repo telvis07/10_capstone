@@ -117,30 +117,37 @@ print(p)
 
 
 ### NGram Frequencies
+Now we will look at the top bigrams, trigrams and 4-grams in the dataset.
 
-Here are top bigrams.
-```{r, echo=TRUE, cache=TRUE}
+#### Top Bigrams
+The top bigrams include places like: `new york` and common phrases like: `happy birthday` and `last night`.
+```{r, echo=FALSE, cache=TRUE}
 ngram_2 <- get_docterm_matrix(docs, 2)
 p2 <- generate_word_frequency_plot(ngram_2$wf, "Top Bigrams for Sampled Text")
 print(p2)
 ```
 
-Here are top tri-grams
-```{r, echo=TRUE, cache=TRUE}
+#### Top Trigrams
+The top trigrams include places like: `new york city` and common phrases like: `happy mothers day` and `rock n roll`.
+
+```{r, echo=FALSE, cache=TRUE}
 ngram_3 <- get_docterm_matrix(docs, 3)
 p3 <- generate_word_frequency_plot(ngram_3$wf, "Top Trigrams for Sampled Text")
 print(p3)
 ```
 
-Here are top 4-grams
-```{r, echo=TRUE, cache=TRUE}
+### Top 4-grams
+The top 4-grams do not appear to be commonly occurring phrases but reflect frequently occuring lines in the corpus. I will investigate using a weighting technique like [TD-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) to account for frequently occuring lines.
+
+```{r, echo=FALSE, cache=TRUE}
 ngram_4 <- get_docterm_matrix(docs, 4)
 p4 <- generate_word_frequency_plot(ngram_4$wf, "Top 4-grams for Sampled Text")
 print(p4)
 ```
 
-## Word Prediction using an NGrams
+## Language Model for Word Prediction
 
+We will build a tree using 
 We build a tree using the ngrams and compute MLE () using the  [Dirichlet-multinomial model](path/to/wikipedia). We use
 [node.tree](path/to/node.tree) which can build a tree from a data.frame. Now lets perform a search for "data".
 
