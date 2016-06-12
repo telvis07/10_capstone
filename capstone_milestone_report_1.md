@@ -4,16 +4,19 @@ June 10, 2016
 
 ## Executive Summary
 
-[Swiftkey](https://swiftkey.com/en) is a text messaging application that predicts the next word as you type a message. When the user types: `"I went to the "` : the application presents three options for what the next word might be. For example, the three words might be `gym, store, restaurant`.
+In this project, we use `R` text mining tools to build a statistical model for
+word sequences. The model will predict the next word as a user types - similar to the [Swiftkey text messaging app](https://swiftkey.com/en). For example, when the user types: `"I went to the "` : the predictor should present options for what the next word might be. For example, the three words might be `gym, store, restaurant`.
 
-In this project, we use `R` text mining tools to build a application that predicts the next word entered into an [shiny application](http://shiny.rstudio.com/). We use data scraped from blogs, twitter and news sites to build a language model to perform prediction. We predict the next word by calculating the [maximum likelihood estimate](https://en.wikipedia.org/wiki/Maximum_likelihood) (MLE) based on the language model.
+We train the model using text scraped from blogs, twitter and news sites. Then we predict the next word by calculating the [maximum likelihood estimate](https://en.wikipedia.org/wiki/Maximum_likelihood) (MLE) using word statistics stored in a suffix tree.
+
+In this document, we discuss progress made toward the completion of this project.
 
 ### TL;DR
 
 In a nutshell, here's a summary of the data analysis performed in this report.
 
 1. Load the raw data.
-2. Extract a 1% subsample of the data.
+2. Extract a 1% sample of the data.
 3. Preprocess the data to remove stopwords, convert to lowercase and other tasks
 4. Generate 2-grams, 3-grams and 4-grams.
 5. Build a n-gram language model using a suffix tree
@@ -37,7 +40,7 @@ The [Data Science Capstone Course](https://www.coursera.org/learn/data-science-p
 |Total             |    4269678|
 
 ## Processing Unstructured Text for Analysis
-We use [a framework for text mining applications within R](https://cran.r-project.org/web/packages/tm/index.html) to transform the unstructured text to a structured document-by-term matrix format required for analysis. The first step is "clean" the text with a series of text processing functions. We use the following preprocessing steps.
+We use [a framework for text mining applications within R](https://cran.r-project.org/web/packages/tm/index.html) to transform the unstructured text to a structured document-by-term matrix format required for analysis. The first step is to "clean" the text with a series of text processing functions. We perform the following preprocessing steps.
 
 - Remove all Punctuation
 - Remove all Numbers
@@ -66,7 +69,7 @@ The `4,269,678` lines from the complete dataset can be memory intensive for the 
 
 
 We see that the `mean` word frequency is nearly twice the `median` frequency for all data sources. The word frequency distribution has a [long tail](https://en.wikipedia.org/wiki/Long_tail) - as seen in the plot below. 
-937 of 22899 (4.1%) words cover 50% of all word instances in the dataset. The `mean` word frequency is heavily weighted by a few words that occur very frequently.
+The `mean` word frequency is heavily weighted by a few words that occur very frequently. 937 of 22899 (4.1%) words cover 50% of all word instances in the dataset. 
 
 ![](capstone_milestone_report_1_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
@@ -94,7 +97,7 @@ The top trigrams include places like: `new york city` and common phrases like: `
 
 ## Language Model for Word Prediction
 
-A suffix tree is a data structure where an interior node represents a "root" character sequence from the training data and child node represents a suffix of that root. For our implementation, each node represents a word and an arc (e.g. search path) represents a bigram, trigram or 4-gram. Each node has an associated count that represents the ngram frequency from the training data. We use these counts to predict the next word by calculating the maximimum likelihood estimate (MLE). 
+A suffix tree is a data structure where an interior node represents a "root" character sequence and a child node represents a suffix of the root. For our implementation, each node represents a word and an arc (e.g. search path) represents a bigram, trigram or 4-gram. Each node has an associated count that represents the ngram frequency from the training data. We use these counts to predict the next word by calculating the maximimum likelihood estimate (MLE). 
 
 ### Word Prediction for: 'data'
 For example: in the figure below we show a suffix tree for ngrams that begin with the word `data`. The first level (w1) of the tree corresponds to the 1-gram "data". The second level (w2) represents all bigrams whose root is "data" : such as "data entry" or "data streams". The same applies to the third (w3) and fourth (w4) levels for trigrams and 4-grams respectively.
@@ -102,10 +105,10 @@ For example: in the figure below we show a suffix tree for ngrams that begin wit
 <!--html_preserve--><div id="htmlwidget-296" style="width:672px;height:480px;" class="grViz html-widget"></div>
 <script type="application/json" data-for="htmlwidget-296">{"x":{"diagram":"digraph {\n\ngraph [rankdir = \"TB\", label = \"Tree Lookup for: data\", fontsize = \"40\"]\n\nnode [style = \"filled,rounded\", shape = \"box\", fillcolor = \"GreenYellow\", fontname = \"helvetica\"]\n\nedge [arrowhead = \"vee\", color = \"grey35\", penwidth = \"2\"]\n\n  \"start\" [label = \"start\", tooltip = \"- name: start\"] \n  \"data\" [label = \"data\", tooltip = \"- freq: 198\"] \n  \"entry\" [label = \"entry\", tooltip = \"- freq: 12\n- word: data entry\"] \n  \"just\" [label = \"just\", tooltip = \"- freq: 6\n- word: data entry just\"] \n  \"overwhelming\" [label = \"overwhelming\", tooltip = \"- freq: 6\n- word: data entry just overwhelming\"] \n  \"respond\" [label = \"respond\", tooltip = \"- freq: 6\n- word: data entry respond\"] \n  \"emails\" [label = \"emails\", tooltip = \"- freq: 6\n- word: data entry respond emails\"] \n  \"streams\" [label = \"streams\", tooltip = \"- freq: 10\n- word: data streams\"] \n  \"live\" [label = \"live\", tooltip = \"- freq: 10\n- word: data streams live\"] \n  \"race\" [label = \"race\", tooltip = \"- freq: 10\n- word: data streams live race\"] \n  \"recovery\" [label = \"recovery\", tooltip = \"- freq: 8\n- word: data recovery\"] \n  \"software\" [label = \"software\", tooltip = \"- freq: 8\n- word: data recovery software\"] \n  \"showed\" [label = \"showed\", tooltip = \"- freq: 8\n- word: data recovery software showed\"] \n  \"dating\" [label = \"dating\", tooltip = \"- freq: 7\n- word: data dating\"] \n  \"average\" [label = \"average\", tooltip = \"- freq: 7\n- word: data dating average\"] \n  \"year\" [label = \"year\", tooltip = \"- freq: 7\n- word: data dating average year\"] \n  \"personalize\" [label = \"personalize\", tooltip = \"- freq: 7\n- word: data personalize\"] \n  \"user\" [label = \"user\", tooltip = \"- freq: 7\n- word: data personalize user\"] \n  \"interface\" [label = \"interface\", tooltip = \"- freq: 7\n- word: data personalize user interface\"] \n  \"records\" [label = \"records\", tooltip = \"- freq: 7\n- word: data records\"] \n  \"show\" [label = \"show\", tooltip = \"- freq: 7\n- word: data records show\"] \n  \"since\" [label = \"since\", tooltip = \"- freq: 7\n- word: data records show since\"] \n  \"allowance\" [label = \"allowance\", tooltip = \"- freq: 6\n- word: data allowance\"] \n  \"htc\" [label = \"htc\", tooltip = \"- freq: 6\n- word: data allowance htc\"] \n  \"one\" [label = \"one\", tooltip = \"- freq: 6\n- word: data allowance htc one\"] \n  \"bus\" [label = \"bus\", tooltip = \"- freq: 5\n- word: data bus\"] \n  \"inverted\" [label = \"inverted\", tooltip = \"- freq: 5\n- word: data bus inverted\"] \n  \"inversion\" [label = \"inversion\", tooltip = \"- freq: 5\n- word: data bus inverted inversion\"] \n  \"soon\" [label = \"soon\", tooltip = \"- freq: 4\n- word: data soon\"] \n  \"much\" [label = \"much\", tooltip = \"- freq: 4\n- word: data soon much\"] \n  \"going\" [label = \"going\", tooltip = \"- freq: 4\n- word: data soon much going\"] \n\"start\"->\"data\"\n\"data\"->\"entry\"\n\"data\"->\"streams\"\n\"data\"->\"recovery\"\n\"data\"->\"dating\"\n\"data\"->\"personalize\"\n\"data\"->\"records\"\n\"data\"->\"allowance\"\n\"data\"->\"bus\"\n\"data\"->\"soon\"\n\"entry\"->\"just\"\n\"entry\"->\"respond\"\n\"streams\"->\"live\"\n\"recovery\"->\"software\"\n\"dating\"->\"average\"\n\"personalize\"->\"user\"\n\"records\"->\"show\"\n\"allowance\"->\"htc\"\n\"bus\"->\"inverted\"\n\"soon\"->\"much\"\n\"just\"->\"overwhelming\"\n\"respond\"->\"emails\"\n\"live\"->\"race\"\n\"software\"->\"showed\"\n\"average\"->\"year\"\n\"user\"->\"interface\"\n\"show\"->\"since\"\n\"htc\"->\"one\"\n\"inverted\"->\"inversion\"\n\"much\"->\"going\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
 
-Each node contains the ngram frequency count from the training data.The frequency count for "data" is 198. The frequency count for "entry" is 12 and "streams" is 10. We calculate the MLE as: 
+Each node contains the ngram frequency count from the training data.The frequency count (C) for "data" is 198. The frequency count for "data entry" is 12 and "data streams" is 10. We calculate the MLE as: 
 
 $$
-P_{mle}(w2|w1) = \frac{C(w1...w2)}{C(w1)}
+P_{mle}(w2|w1) = \frac{C(w1 \dots w2)}{C(w1)}
 $$
 
 The probability of "data entry" is:
@@ -114,7 +117,7 @@ $$
 P_{mle}(entry|data) = \frac{12}{198} = 0.06 = 6\% 
 $$
 
-The probability for "data streams" is:
+The probability of "data streams" is:
 $$
 P_{mle}(streams|data) = \frac{10}{198} = 0.05 = 5\%
 $$
@@ -122,26 +125,9 @@ $$
 Therefore, the language model would predict that "entry" is the most likely next word.
 
 
-```r
-results <- perform_search(ngram_tree, c("data"))
-print(results)
-```
-
-```
-##                   12                   10                  
-## recommended_words "entry"              "streams"           
-## likelihood        "0.0606060606060606" "0.0505050505050505"
-##                   8                    7                   
-## recommended_words "recovery"           "dating"            
-## likelihood        "0.0404040404040404" "0.0353535353535354"
-##                   7                   
-## recommended_words "personalize"       
-## likelihood        "0.0353535353535354"
-```
-
 ### Word Prediction for: 'data entry'
 
-Now let's predict the next word after: "data entry". The frequency count for "data entry" is 12. The frequency count for "just" is 6 and "respond" is 6. 
+Now let's predict the next word after: "data entry". The frequency count (C) for "data entry" is 12. The frequency count for "data entry just" is 6 and "data entry respond" is 6.
 
 <!--html_preserve--><div id="htmlwidget-9096" style="width:672px;height:480px;" class="grViz html-widget"></div>
 <script type="application/json" data-for="htmlwidget-9096">{"x":{"diagram":"digraph {\n\ngraph [rankdir = \"TB\", label = \"Tree Lookup for: data entry\", fontsize = \"40\"]\n\nnode [style = \"filled,rounded\", shape = \"box\", fillcolor = \"GreenYellow\", fontname = \"helvetica\"]\n\nedge [arrowhead = \"vee\", color = \"grey35\", penwidth = \"2\"]\n\n  \"start\" [label = \"start\", tooltip = \"- name: start\"] \n  \"data\" [label = \"data\", tooltip = \"- freq: 198\"] \n  \"entry\" [label = \"entry\", fillcolor = \"LightBlue\", tooltip = \"- freq: 12\n- word: data entry\", penwidth = \"5px\"] \n  \"just\" [label = \"just\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry just\", penwidth = \"5px\"] \n  \"overwhelming\" [label = \"overwhelming\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry just overwhelming\", penwidth = \"5px\"] \n  \"respond\" [label = \"respond\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry respond\", penwidth = \"5px\"] \n  \"emails\" [label = \"emails\", fillcolor = \"LightBlue\", tooltip = \"- freq: 6\n- word: data entry respond emails\", penwidth = \"5px\"] \n  \"streams\" [label = \"streams\", tooltip = \"- freq: 10\n- word: data streams\"] \n  \"live\" [label = \"live\", tooltip = \"- freq: 10\n- word: data streams live\"] \n  \"race\" [label = \"race\", tooltip = \"- freq: 10\n- word: data streams live race\"] \n  \"recovery\" [label = \"recovery\", tooltip = \"- freq: 8\n- word: data recovery\"] \n  \"software\" [label = \"software\", tooltip = \"- freq: 8\n- word: data recovery software\"] \n  \"showed\" [label = \"showed\", tooltip = \"- freq: 8\n- word: data recovery software showed\"] \n  \"dating\" [label = \"dating\", tooltip = \"- freq: 7\n- word: data dating\"] \n  \"average\" [label = \"average\", tooltip = \"- freq: 7\n- word: data dating average\"] \n  \"year\" [label = \"year\", tooltip = \"- freq: 7\n- word: data dating average year\"] \n  \"personalize\" [label = \"personalize\", tooltip = \"- freq: 7\n- word: data personalize\"] \n  \"user\" [label = \"user\", tooltip = \"- freq: 7\n- word: data personalize user\"] \n  \"interface\" [label = \"interface\", tooltip = \"- freq: 7\n- word: data personalize user interface\"] \n  \"records\" [label = \"records\", tooltip = \"- freq: 7\n- word: data records\"] \n  \"show\" [label = \"show\", tooltip = \"- freq: 7\n- word: data records show\"] \n  \"since\" [label = \"since\", tooltip = \"- freq: 7\n- word: data records show since\"] \n  \"allowance\" [label = \"allowance\", tooltip = \"- freq: 6\n- word: data allowance\"] \n  \"htc\" [label = \"htc\", tooltip = \"- freq: 6\n- word: data allowance htc\"] \n  \"one\" [label = \"one\", tooltip = \"- freq: 6\n- word: data allowance htc one\"] \n  \"bus\" [label = \"bus\", tooltip = \"- freq: 5\n- word: data bus\"] \n  \"inverted\" [label = \"inverted\", tooltip = \"- freq: 5\n- word: data bus inverted\"] \n  \"inversion\" [label = \"inversion\", tooltip = \"- freq: 5\n- word: data bus inverted inversion\"] \n  \"soon\" [label = \"soon\", tooltip = \"- freq: 4\n- word: data soon\"] \n  \"much\" [label = \"much\", tooltip = \"- freq: 4\n- word: data soon much\"] \n  \"going\" [label = \"going\", tooltip = \"- freq: 4\n- word: data soon much going\"] \n\"start\"->\"data\"\n\"data\"->\"entry\"\n\"data\"->\"streams\"\n\"data\"->\"recovery\"\n\"data\"->\"dating\"\n\"data\"->\"personalize\"\n\"data\"->\"records\"\n\"data\"->\"allowance\"\n\"data\"->\"bus\"\n\"data\"->\"soon\"\n\"entry\"->\"just\"\n\"entry\"->\"respond\"\n\"streams\"->\"live\"\n\"recovery\"->\"software\"\n\"dating\"->\"average\"\n\"personalize\"->\"user\"\n\"records\"->\"show\"\n\"allowance\"->\"htc\"\n\"bus\"->\"inverted\"\n\"soon\"->\"much\"\n\"just\"->\"overwhelming\"\n\"respond\"->\"emails\"\n\"live\"->\"race\"\n\"software\"->\"showed\"\n\"average\"->\"year\"\n\"user\"->\"interface\"\n\"show\"->\"since\"\n\"htc\"->\"one\"\n\"inverted\"->\"inversion\"\n\"much\"->\"going\"\n}","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script><!--/html_preserve-->
@@ -149,34 +135,22 @@ Now let's predict the next word after: "data entry". The frequency count for "da
 We calculate the MLE as: 
 
 $$
-`P_mle(w3|w1...w2) = \frac{C(w1...w3)}{C(w2)}
+P_{mle}(w3|w1 \dots w2) = \frac{C(w1 \dots w3)}{C(w1 \dots w2)}
 $$
 
 The probability of "data entry just" is:
 
 $$
-P_{mle}(just|data entry) = \frac{6}{12} = 0.50 = 50\%
+P_{mle}(just|data \space entry) = \frac{6}{12} = 0.50 = 50\%
 $$
 
 The probablility of "data entry respond" is:
 
 $$
-P_mle(respond|data entry) = \frac{6}{12} = 0.50 = 50\%
+P_{mle}(respond|data \space entry) = \frac{6}{12} = 0.50 = 50\%
 $$
 
 The language model would predict that "just" and "respond"" are equally likely to be the next word.
-
-
-```r
-results <- perform_search(ngram_tree, c("data", "entry"))
-print(results)
-```
-
-```
-##                   6      6        
-## recommended_words "just" "respond"
-## likelihood        "0.5"  "0.5"
-```
 
 ### Conclusion
 
@@ -194,7 +168,7 @@ Here are the list of next steps for the coming weeks.
 
 # Appendix
 
-## Appendix 1: Subsampling Code
+## Appendix 1: Sampling Code
 
 This code collects a 1% sample using a "coin flip" to decide which lines to choose.
 
