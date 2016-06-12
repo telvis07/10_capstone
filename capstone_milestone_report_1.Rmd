@@ -1,5 +1,5 @@
 ---
-title: "Using text analysis techniques to build a predictive text model"
+title: "Capstone Milestone Report 1: Language Modeling and Text Prediction"
 author: "Telvis Calhoun"
 date: "June 10, 2016"
 output:

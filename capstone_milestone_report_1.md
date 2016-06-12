@@ -1,4 +1,4 @@
-# Using text analysis techniques to build a predictive text model
+# Capstone Milestone Report 1: Language Modeling and Text Prediction
 Telvis Calhoun  
 June 10, 2016  
 
