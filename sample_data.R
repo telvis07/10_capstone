@@ -2,6 +2,28 @@ library(tm)
 
 # sample the datasci dir
 sample_capstone_data <- function(fn, outfn, sample_len=0.01) {
+  # TODO: See  ./08_ml/notes.R
+  
+  print(sprintf("Reading %s", fn))
+  lines <- readLines(fn)
+  set.seed(123)
+  # sample.int
+  # 
+  print(sprintf("Read %s Length %s", fn, length(lines)))
+  n = length(lines)
+  size = n*sample_len
+  lines_sample <- lines[sample(n, size, replace=FALSE)]
+  print(sprintf("Writing %s. Length %s", outfn, length(lines_sample)))
+  write.csv(lines_sample, file=outfn, row.names=FALSE)
+}
+
+
+# sample the datasci dir
+sample_capstone_data_rbinom <- function(fn, outfn, sample_len=0.01) {
+  # this is no-bueno, rbinom samples with replacement.
+  
+  # TODO: See  ./08_ml/notes.R
+  
   print(sprintf("Reading %s", fn))
   lines <- readLines(fn)
   set.seed(123)

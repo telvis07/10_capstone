@@ -1,6 +1,14 @@
 library(data.tree)
 library(dplyr)
 
+# https://www.coursera.org/learn/data-science-project/supplement/SKIQt/task-4-prediction-model
+# Questions to consider
+# 
+# How does the model perform for different choices of the parameters and size of the model?
+# How much does the model slow down for the performance you gain?
+# Does perplexity correlate with the other measures of accuracy?
+# Can you reduce the size of the model (number of parameters) without reducing performance?
+
 tree_single_word <- function(min_frequency=10) {
   tmp <- system.time({
     last_root_word_df <- filter(datums$df_ngram_all, grepl("^last ", word) & freq > min_frequency)

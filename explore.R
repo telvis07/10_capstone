@@ -188,7 +188,7 @@ do_explore_ngrams <- function(docs=NULL) {
   # generate_sample_files()
   if (is.null(docs)) {
     docs <- load_sample_dircorpus()
-    docs <- preprocess_entries(docs, save_file="data/processed_sample_corpus.rds")
+    docs <- preprocess_entries(docs)
   }
 
   # ngram top words
