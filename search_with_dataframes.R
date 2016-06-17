@@ -1,7 +1,7 @@
 # searching using data.frames
 
 
-perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 5, min_frequency=1) {
+perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 5, min_frequency=0) {
   recommended_words = data.frame()
   joined_words <- paste(words, collapse = " ")
   
@@ -9,14 +9,17 @@ perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 
   gram_length <- length(words)
   ngram_df <- ngram_df_list[[gram_length]]
   root_ngram_df <- ngram_df[ngram_df$word == joined_words,]
+  print("root")
+  print(root_ngram_df)
   
   if (nrow(root_ngram_df) > 0){
     # there is a word path in the tree corresponding to the search phrase
     next_ngram_df <- ngram_df_list[[gram_length+1]]
-    search_text <- paste0("^", words, " ")
+    search_text <- paste0("^", joined_words, " ")
+    print(search_text)
     results <- filter(next_ngram_df, grepl(search_text, word) & freq > min_frequency)
 
-    print(results)
+    print(head(results))
     if (nrow(results) > 0){
       # the word path exists and there are words that follow
       
