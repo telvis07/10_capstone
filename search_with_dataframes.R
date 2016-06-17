@@ -2,6 +2,53 @@
 source("analysis.R")
 source("sample_data.R")
 
+multi_search_tree_with_data_frames <- function(ngram_df_list, 
+                                               phrase, 
+                                               num_suggestions=5, 
+                                               debug=FALSE){
+  words = strsplit(phrase, " ")
+  words = unlist(words)
+  recommended_words = data.frame()
+  
+  # check the last N words, based on number of grams
+  num_grams <- min(length(ngram_df_list)-1, length(words))
+
+  
+  # for (i in seq_along(words)) {
+  for (i in seq(num_grams, 1, -1)){
+    # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
+    # consider only doing backoff queries if the full phrase 
+    # returns no results.
+    search_words = tail(words, i)
+    print(search_words)
+    ret = perform_search_in_dataframe(ngram_df_list = ngram_df_list,
+                                        words = search_words,
+                                        num_suggestions = num_suggestions)
+
+    if(nrow(ret)) {
+      recommended_words = rbind(recommended_words, ret)
+    }
+    
+    if (nrow(ret) >= num_suggestions){
+      break
+    }
+  }
+  
+  # MLE - maximum likelihood estimate
+  max_range = min(num_suggestions, nrow(recommended_words))
+  ord = order(recommended_words$likelihood, decreasing = TRUE)
+  recommendations = recommended_words[ord,]
+  
+  # print recommended words
+  if (debug) {
+    print("recommended words....")
+    print(recommendations)
+  }
+  
+  ret
+}
+
+
 ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
@@ -64,7 +111,11 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   
 }
 
-perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 5, min_frequency=0) {
+perform_search_in_dataframe <- function(ngram_df_list, 
+                                        words, 
+                                        num_suggestions = 5, 
+                                        min_frequency=0,
+                                        debug=FALSE) {
   recommended_words = data.frame()
   joined_words <- paste(words, collapse = " ")
   
@@ -72,20 +123,25 @@ perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 
   gram_length <- length(words)
   ngram_df <- ngram_df_list[[gram_length]]
   root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
-  print("root")
-  print(root_ngram_df)
+  if (debug){
+    print("root")
+    print(root_ngram_df)
+  }
   
   if (nrow(root_ngram_df) > 0){
     # there is a word path in the tree corresponding to the search phrase
     next_ngram_df <- ngram_df_list[[gram_length+1]]
     search_text <- paste0("^", joined_words, " ")
-    print(search_text)
+    if (debug) {
+      print(search_text)
+    }
     
     # results <- filter(next_ngram_df, grepl(search_text, word))
     results <- filter(next_ngram_df, root==root_ngram_df$word)
 
-
-    print(head(results))
+    if (debug){
+      print(head(results))
+    }
     if (nrow(results) > 0){
       # the word path exists and there are words that follow
       
@@ -103,8 +159,10 @@ perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 
     print(sprintf("No suggestions for word after: '%s'", paste(words, collapse=" ")))
   }
   
-  print("recommended words")
-  print(recommended_words)
+  if(debug){
+    print("recommended words")
+    print(recommended_words)
+  }
   recommended_words
 }
 
