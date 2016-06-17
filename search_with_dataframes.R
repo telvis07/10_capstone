@@ -81,11 +81,9 @@ perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 
     search_text <- paste0("^", joined_words, " ")
     print(search_text)
     
-    tmp <- system.time({
-      results <- filter(next_ngram_df, grepl(search_text, word))
-    })
-    print(tmp)
-    
+    # results <- filter(next_ngram_df, grepl(search_text, word))
+    results <- filter(next_ngram_df, root==root_ngram_df$word)
+
 
     print(head(results))
     if (nrow(results) > 0){
