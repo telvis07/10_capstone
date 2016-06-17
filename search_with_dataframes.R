@@ -1,5 +1,37 @@
 # searching using data.frames
+source("analysis.R")
 
+ngram_language_modeling_with_data_frames <- function(docs=NULL) {
+  # How these probabilities are estimated is a matter of great interest in the area of
+  # language modeling. The most straightforward way is take a word history and count
+  # the different words which follow that word history. As language models are predictive
+  # models, one wants to model future possible word sequences given what was seen
+  # in training. This suggests a simple relative frequency as a probability estimate of a
+  # sequence of words, which is better known as the maximum likelihood estimator (see
+  #                                                                               [Manning and Sch¨utze, 1999]):
+  
+  # generate_sample_files()
+  if (is.null(docs)) {
+    docs <- load_sample_dircorpus()
+    docs <- preprocess_entries(docs)
+  }
+  
+  ngram_1 <- get_docterm_matrix(docs, 1)
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  ngram_3 <- get_docterm_matrix(docs, 3)
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  
+  # Combine all the word frequency data.frames
+  # ngram_all_df <- rbind(ngram_2$wf,
+  #                       ngram_3$wf,
+  #                       ngram_4$wf)
+  ngram_df_list = list("ngram_1"= ngram_1$wf, 
+                       "ngram_2"= ngram_2$wf, 
+                       "ngram_3"=ngram_3$wf, 
+                       "ngram_4"=ngram_4$wf)
+  ngram_df_list
+  
+}
 
 perform_search_in_dataframe <- function(ngram_df_list, words, num_suggestions = 5, min_frequency=0) {
   recommended_words = data.frame()

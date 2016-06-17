@@ -1,9 +1,7 @@
 library(tm)
 
 # sample the datasci dir
-sample_capstone_data <- function(fn, outfn, sample_len=0.01) {
-  # TODO: See  ./08_ml/notes.R
-  
+sample_capstone_data <- function(fn, outfn, sample_len=0.10) {
   print(sprintf("Reading %s", fn))
   lines <- readLines(fn)
   set.seed(123)
@@ -17,21 +15,6 @@ sample_capstone_data <- function(fn, outfn, sample_len=0.01) {
   write.csv(lines_sample, file=outfn, row.names=FALSE)
 }
 
-
-# sample the datasci dir
-sample_capstone_data_rbinom <- function(fn, outfn, sample_len=0.01) {
-  # this is no-bueno, rbinom samples with replacement.
-  
-  # TODO: See  ./08_ml/notes.R
-  
-  print(sprintf("Reading %s", fn))
-  lines <- readLines(fn)
-  set.seed(123)
-  print(sprintf("Read %s Length %s", fn, length(lines)))
-  lines_sample <- lines[rbinom(length(lines)*sample_len, length(lines), 0.5)]
-  print(sprintf("Writing %s. Length %s", outfn, length(lines_sample)))
-  write.csv(lines_sample, file=outfn, row.names=FALSE, col.names=FALSE)
-}
 
 generate_sample_files <- function() {
   sample_dir <- "./data/final/en_US/sample"
