@@ -112,6 +112,16 @@ preprocess_entries_with_timing <- function(docs, save_file="data/preprocessed_co
   docs
 }
 
+preprocess_single_string <- function(s) {
+  s <- removePunctuation(s)
+  s <- removeNumbers(s)
+  s <- tolower(s)
+  s <- removeWords(s, stopwords("english"))
+  s <- stripWhitespace(s)
+  # TODO: load the profanity DB
+  s
+}
+
 preprocess_entries <- function(docs) {
   
   options(mc.cores=4)

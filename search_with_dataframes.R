@@ -3,9 +3,10 @@ source("analysis.R")
 source("sample_data.R")
 
 multi_search_tree_with_data_frames <- function(ngram_df_list, 
-                                               phrase, 
+                                               raw_phrase, 
                                                num_suggestions=5, 
                                                debug=FALSE){
+  phrase <- preprocess_single_string(raw_phrase)
   words = strsplit(phrase, " ")
   words = unlist(words)
   recommended_words = data.frame()
