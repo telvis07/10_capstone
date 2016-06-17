@@ -4,7 +4,7 @@ source("sample_data.R")
 
 multi_search_tree_with_data_frames <- function(ngram_df_list, 
                                                raw_phrase, 
-                                               num_suggestions=5, 
+                                               num_suggestions=3, 
                                                debug=FALSE){
   phrase <- preprocess_single_string(raw_phrase)
   words = strsplit(phrase, " ")
@@ -14,7 +14,6 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
   # check the last N words, based on number of grams
   num_grams <- min(length(ngram_df_list)-1, length(words))
 
-  
   # for (i in seq_along(words)) {
   for (i in seq(num_grams, 1, -1)){
     # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
@@ -24,7 +23,8 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     print(search_words)
     ret = perform_search_in_dataframe(ngram_df_list = ngram_df_list,
                                         words = search_words,
-                                        num_suggestions = num_suggestions)
+                                        num_suggestions = num_suggestions,
+                                      debug=F)
 
     if(nrow(ret)) {
       recommended_words = rbind(recommended_words, ret)
@@ -38,6 +38,11 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
   # MLE - maximum likelihood estimate
   max_range = min(num_suggestions, nrow(recommended_words))
   ord = order(recommended_words$likelihood, decreasing = TRUE)
+  recommended_words$word <- sapply(recommended_words$word, 
+                                   function(x) {
+                                     w <- unlist(strsplit(x, " ")); 
+                                     tail(w,1)
+                                   })
   recommendations = recommended_words[ord,]
   
   # print recommended words
@@ -46,7 +51,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     print(recommendations)
   }
   
-  ret
+  recommendations
 }
 
 
