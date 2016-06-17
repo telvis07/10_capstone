@@ -213,7 +213,7 @@ get_docterm_matrix <- function(docs, ngram_length=1) {
   freq <- colSums(as.matrix(dtm))
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
-  
+
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.
   wf <- mutate(wf, word=as.character(word))

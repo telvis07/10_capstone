@@ -121,6 +121,43 @@ all_docs_word_plot <- function(sample_vector_corpus) {
   obj
 }
 
+ngram_language_modeling_full <- function(docs=NULL) {
+  # How these probabilities are estimated is a matter of great interest in the area of
+  # language modeling. The most straightforward way is take a word history and count
+  # the different words which follow that word history. As language models are predictive
+  # models, one wants to model future possible word sequences given what was seen
+  # in training. This suggests a simple relative frequency as a probability estimate of a
+  # sequence of words, which is better known as the maximum likelihood estimator (see
+  #                                                                               [Manning and Sch¨utze, 1999]):
+  
+  
+  # generate_sample_files()
+  if (is.null(docs)) {
+    docs <- load_sample_dircorpus()
+    docs <- preprocess_entries(docs)
+  }
+  
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  ngram_3 <- get_docterm_matrix(docs, 3)
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  
+  # Combine all the word frequency data.frames
+  ngram_all_df <- rbind(ngram_2$wf,
+                        ngram_3$wf,
+                        ngram_4$wf)
+  
+  # https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html
+  ngram_tree <- build_tree(ngram_all_df)
+  
+  ngram_tree
+  
+  # 
+  # plot_tree_for_report(ngram_tree)
+  
+  #
+  # predict_with_test_tree(ngram_tree)
+}
+
 ngram_language_modeling <- function(docs=NULL) {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
@@ -159,6 +196,36 @@ ngram_language_modeling <- function(docs=NULL) {
   
   #
   # predict_with_test_tree(ngram_tree)
+}
+
+ngram_language_modeling_with_data_frames <- function(docs=NULL) {
+  # How these probabilities are estimated is a matter of great interest in the area of
+  # language modeling. The most straightforward way is take a word history and count
+  # the different words which follow that word history. As language models are predictive
+  # models, one wants to model future possible word sequences given what was seen
+  # in training. This suggests a simple relative frequency as a probability estimate of a
+  # sequence of words, which is better known as the maximum likelihood estimator (see
+  #                                                                               [Manning and Sch¨utze, 1999]):
+  
+  
+  # generate_sample_files()
+  if (is.null(docs)) {
+    docs <- load_sample_dircorpus()
+    docs <- preprocess_entries(docs)
+  }
+  
+  ngram_1 <- get_docterm_matrix(docs, 1)
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  ngram_3 <- get_docterm_matrix(docs, 3)
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  
+  # Combine all the word frequency data.frames
+  # ngram_all_df <- rbind(ngram_2$wf,
+  #                       ngram_3$wf,
+  #                       ngram_4$wf)
+  ngram_df_list = list("ngram_1"= ngram_1$wf, "ngram_2"= ngram_2$wf, "ngram_3"=ngram_3$wf, "ngram_4"=ngram_4$wf)
+  ngram_df_list
+
 }
 
 plot_tree_for_report <- function(ngram_tree, 

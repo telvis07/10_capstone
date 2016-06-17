@@ -9,6 +9,7 @@ library(dplyr)
 # Does perplexity correlate with the other measures of accuracy?
 # Can you reduce the size of the model (number of parameters) without reducing performance?
 
+
 tree_single_word <- function(min_frequency=10) {
   tmp <- system.time({
     last_root_word_df <- filter(datums$df_ngram_all, grepl("^last ", word) & freq > min_frequency)
