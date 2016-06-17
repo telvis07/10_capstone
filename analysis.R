@@ -8,6 +8,7 @@ library(RWeka)
 library(timeit)
 library(ngram)
 library(tau)
+library(dplyr)
 
 # setwd("/Users/telvis/work/datasciencecoursera/10_capstone")
 
@@ -222,7 +223,7 @@ get_docterm_matrix <- function(docs, ngram_length=1) {
   docterm_datums = list()
   
   # doc term matrix
-  docterm_datums$dtm <- dtm
+  # docterm_datums$dtm <- dtm
   
   # sorted word frequency data.frame
   docterm_datums$wf <- wf

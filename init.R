@@ -4,7 +4,7 @@ setwd('/Users/telvis/work/datasciencecoursera/10_capstone')
 
 reinit_environment <- function() {
   tmp = system.time({
-    datums = list()
+    # datums = list()
     # All datums
     # datums$df_ngram_2 <- readRDS("data/term_doc_matrix_2_ngram_df.rds")
     # datums$df_ngram_3 <- readRDS("data/term_doc_matrix_3_ngram_df.rds")
@@ -30,10 +30,10 @@ reinit_environment <- function() {
     
     # datums$df_ngram_all <- readRDS("data/pruned_50p_term_doc_matrix_all_ngram_minfreq_100_df.rds")
     # datums$ngram_tree <- readRDS("data/ngram_all_minfreq_175_tree.rds")
-    
+    ngram_df_list <- readRDS("data/ngram_df_list.5.percent.rds")
   })
   print(tmp)
-  datums
+  ngram_df_list
 }
 
 # from http://stackoverflow.com/questions/1358003/tricks-to-manage-the-available-memory-in-an-r-session
@@ -68,7 +68,9 @@ lsos <- function(..., n=10) {
 }
 
 
-datums <- reinit_environment()
+ngram_df_list <- reinit_environment()
 source("analysis.R")
 source("explore.R")
+source("sample_data.R")
+source("search_with_dataframes.R")
 print(lsos())
