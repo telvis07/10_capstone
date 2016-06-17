@@ -30,7 +30,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
       recommended_words = rbind(recommended_words, ret)
     }
     
-    if (nrow(ret) >= num_suggestions){
+    if (length(recommended_words) > 0){
       break
     }
   }
@@ -97,22 +97,21 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
                                 paste(w, collapse = " ")
                               })
   
-  ngram_4 <- get_docterm_matrix(docs, 4)
-  # ngram_4$wf$root <- sapply(ngram_df_list$ngram_4$word, function(x) {unlist(strsplit(x, " "))[1:3]})
-  ngram_4$wf$root <- sapply(ngram_4$wf$word, 
-                            function(x) {
-                              w <- unlist(strsplit(x, " "))[1:3]; 
-                              paste(w, collapse = " ")
-                            })
+  # ngram_4 <- get_docterm_matrix(docs, 4)
+  # ngram_4$wf$root <- sapply(ngram_4$wf$word, 
+  #                           function(x) {
+  #                             w <- unlist(strsplit(x, " "))[1:3]; 
+  #                             paste(w, collapse = " ")
+  #                           })
   
   # Combine all the word frequency data.frames
-  # ngram_all_df <- rbind(ngram_2$wf,
-  #                       ngram_3$wf,
-  #                       ngram_4$wf)
+  # ngram_df_list = list("ngram_1"=ngram_1$wf, 
+  #                      "ngram_2"=ngram_2$wf, 
+  #                      "ngram_3"=ngram_3$wf, 
+  #                      "ngram_4"=ngram_4$wf)
   ngram_df_list = list("ngram_1"=ngram_1$wf, 
                        "ngram_2"=ngram_2$wf, 
-                       "ngram_3"=ngram_3$wf, 
-                       "ngram_4"=ngram_4$wf)
+                       "ngram_3"=ngram_3$wf)
   ngram_df_list
   
 }
