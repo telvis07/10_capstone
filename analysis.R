@@ -224,13 +224,32 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
   freq <- colSums(as.matrix(dtm))
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
-  num_removed <- nrow(filter(wf, freq<=min_frequency))
-  print(sprintf("Removing %s entry from %s ngrams", num_removed, ngram_length))
-  wf <- filter(wf, freq>min_frequency)
-
+  
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.
   wf <- mutate(wf, word=as.character(word))
+  count_before <- nrow(wf)
+  if (ngram_length > 1) {
+    print("generating root")
+    wf$root <- sapply(wf$word, 
+                      function(x) {
+                        w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
+                        paste(w, collapse = " ")
+                      })
+    
+    print("filter by most frequent root")
+    root_counts <- summarize(group_by(wf, root), root_count=length(root))
+    root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
+    # 'join' with root counts and 'filter' by count
+    wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
+    # remove the 'root_count' column
+    wf <- subset(wf, select=x(root_count))
+  } else {
+    wf <- filter(wf, freq>min_frequency)
+  }
+  
+  count_after <- nrow(wf)
+  print(sprintf("Removed %s rows %-grams", count_before - count_after, ngram_length))
   
   # return term/doc matrix and word frequency data.frame in a list
   docterm_datums = list()

@@ -81,43 +81,42 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   })
   print(tmp)
   
-  tmp <- system.time({
-    # ngram_2$wf$root <- sapply(ngram_df_list$ngram_2$word, function(x) {unlist(strsplit(x, " "))[1]})
-    ngram_2$wf$root <- sapply(ngram_2$wf$word, 
-                              function(x) {
-                                w <- unlist(strsplit(x, " "))[1]; 
-                                paste(w, collapse = " ")
-                              })
-  })
-  print(tmp)
+  # tmp <- system.time({
+  #   # ngram_2$wf$root <- sapply(ngram_df_list$ngram_2$word, function(x) {unlist(strsplit(x, " "))[1]})
+  #   ngram_2$wf$root <- sapply(ngram_2$wf$word, 
+  #                             function(x) {
+  #                               w <- unlist(strsplit(x, " "))[1]; 
+  #                               paste(w, collapse = " ")
+  #                             })
+  # })
+  # print(tmp)
   
   ngram_3 <- get_docterm_matrix(docs, 3)
-  ngram_3$wf$root <- sapply(ngram_3$wf$word, 
-                            function(x) {
-                                w <- unlist(strsplit(x, " "))[1:2]; 
-                                paste(w, collapse = " ")
-                              })
+  # ngram_3$wf$root <- sapply(ngram_3$wf$word, 
+  #                           function(x) {
+  #                               w <- unlist(strsplit(x, " "))[1:2]; 
+  #                               paste(w, collapse = " ")
+  #                             })
   
   ngram_4 <- get_docterm_matrix(docs, 4)
-  ngram_4$wf$root <- sapply(ngram_4$wf$word, 
-                             function(x) {
-                               w <- unlist(strsplit(x, " "))[1:3]; 
-                               paste(w, collapse = " ")
-                             })
+  # ngram_4$wf$root <- sapply(ngram_4$wf$word, 
+  #                            function(x) {
+  #                              w <- unlist(strsplit(x, " "))[1:3]; 
+  #                              paste(w, collapse = " ")
+  #                            })
   
-  ngram_5 <- get_docterm_matrix(docs, 5)
-  ngram_5$wf$root <- sapply(ngram_5$wf$word, 
-                            function(x) {
-                              w <- unlist(strsplit(x, " "))[1:4]; 
-                              paste(w, collapse = " ")
-                            })
+  # ngram_5 <- get_docterm_matrix(docs, 5)
+  # ngram_5$wf$root <- sapply(ngram_5$wf$word, 
+  #                           function(x) {
+  #                             w <- unlist(strsplit(x, " "))[1:4]; 
+  #                             paste(w, collapse = " ")
+  #                           })
   
   # Combine all the word frequency data.frames
   ngram_df_list = list("ngram_1"=ngram_1$wf, 
                         "ngram_2"=ngram_2$wf, 
                         "ngram_3"=ngram_3$wf, 
-                        "ngram_4"=ngram_4$wf,
-                        "ngram_5"=ngram_5$wf)
+                        "ngram_4"=ngram_4$wf)
 
   ngram_df_list
   
