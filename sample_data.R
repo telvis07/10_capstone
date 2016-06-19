@@ -1,7 +1,7 @@
 library(tm)
 
 # sample the datasci dir
-sample_capstone_data <- function(fn, outfn, sample_len=0.05) {
+sample_capstone_data <- function(fn, outfn, sample_len=0.25) {
   print(sprintf("Reading %s", fn))
   lines <- readLines(fn)
   set.seed(123)

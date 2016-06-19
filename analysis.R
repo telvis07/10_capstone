@@ -116,7 +116,7 @@ preprocess_single_string <- function(s) {
   s <- removePunctuation(s)
   s <- removeNumbers(s)
   s <- tolower(s)
-  s <- removeWords(s, stopwords("english"))
+  # s <- removeWords(s, stopwords("english"))
   s <- stripWhitespace(s)
   # TODO: load the profanity DB
   s
@@ -129,7 +129,7 @@ preprocess_entries <- function(docs) {
   docs <- tm_map(docs, removePunctuation)  # *Removing punctuation:*  
   docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
   docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
-  docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
+  # docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
   docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
   docs <- remove_profanity(docs)
   docs
@@ -209,7 +209,7 @@ get_docterm_matrix_with_timing <- function(docs,
   # list(full=dtm, sparse=dtms)
 }
 
-get_docterm_matrix <- function(docs, ngram_length=1) {
+get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
   options(mc.cores=1)
   
   tokenizer <- function(x) {
@@ -224,6 +224,9 @@ get_docterm_matrix <- function(docs, ngram_length=1) {
   freq <- colSums(as.matrix(dtm))
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
+  num_removed <- nrow(filter(wf, freq<=min_frequency))
+  print(sprintf("Removing %s entry from %s ngrams", num_removed, ngram_length))
+  wf <- filter(wf, freq>min_frequency)
 
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.

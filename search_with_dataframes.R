@@ -7,6 +7,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
                                                num_suggestions=3, 
                                                debug=FALSE){
   phrase <- preprocess_single_string(raw_phrase)
+  print(phrase)
   words = strsplit(phrase, " ")
   words = unlist(words)
   recommended_words = data.frame()
@@ -30,9 +31,9 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
       recommended_words = rbind(recommended_words, ret)
     }
     
-    if (length(recommended_words) > 0){
-      break
-    }
+    # if (length(recommended_words) >= num_suggestions){
+    #   break
+    # }
   }
   
   # MLE - maximum likelihood estimate
@@ -97,21 +98,27 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
                                 paste(w, collapse = " ")
                               })
   
-  # ngram_4 <- get_docterm_matrix(docs, 4)
-  # ngram_4$wf$root <- sapply(ngram_4$wf$word, 
-  #                           function(x) {
-  #                             w <- unlist(strsplit(x, " "))[1:3]; 
-  #                             paste(w, collapse = " ")
-  #                           })
+  ngram_4 <- get_docterm_matrix(docs, 4)
+  ngram_4$wf$root <- sapply(ngram_4$wf$word, 
+                             function(x) {
+                               w <- unlist(strsplit(x, " "))[1:3]; 
+                               paste(w, collapse = " ")
+                             })
+  
+  ngram_5 <- get_docterm_matrix(docs, 5)
+  ngram_5$wf$root <- sapply(ngram_5$wf$word, 
+                            function(x) {
+                              w <- unlist(strsplit(x, " "))[1:4]; 
+                              paste(w, collapse = " ")
+                            })
   
   # Combine all the word frequency data.frames
-  # ngram_df_list = list("ngram_1"=ngram_1$wf, 
-  #                      "ngram_2"=ngram_2$wf, 
-  #                      "ngram_3"=ngram_3$wf, 
-  #                      "ngram_4"=ngram_4$wf)
   ngram_df_list = list("ngram_1"=ngram_1$wf, 
-                       "ngram_2"=ngram_2$wf, 
-                       "ngram_3"=ngram_3$wf)
+                        "ngram_2"=ngram_2$wf, 
+                        "ngram_3"=ngram_3$wf, 
+                        "ngram_4"=ngram_4$wf,
+                        "ngram_5"=ngram_5$wf)
+
   ngram_df_list
   
 }
