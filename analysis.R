@@ -82,36 +82,6 @@ remove_profanity <- function(docs) {
   docs
 }
 
-preprocess_entries_with_timing <- function(docs, save_file="data/preprocessed_corpus.rds") {
-  
-  options(mc.cores=4)
-  
-  print("remove punctuation")
-  print(system.time({docs <- tm_map(docs, removePunctuation)}))   # *Removing punctuation:*  
-  
-  print("removeNumbers")
-  print(system.time({docs <- tm_map(docs, removeNumbers)}))      # *Removing numbers:* 
-  
-  print("tolower")
-  print(system.time({docs <- tm_map(docs, content_transformer(tolower))}))   # *Converting to lowercase:* 
-  
-  print("removeWords")
-  print(system.time({docs <- tm_map(docs, removeWords, stopwords("english"))}))   # *Removing "stopwords" 
-  
-  print("stripWhitespace")
-  print(system.time({docs <- tm_map(docs, stripWhitespace)}))   # *Stripping whitespace
-  
-  print("remove profanity")
-  print(system.time({docs <- remove_profanity(docs)}))
-  
-  # print("PlainTextDocument")
-  # print(system.time({docs <- tm_map(docs, PlainTextDocument)}))
-  
-  print(sprintf("Saving processed docs to %s", save_file))
-  saveRDS(docs, save_file)
-  docs
-}
-
 preprocess_single_string <- function(s) {
   s <- removePunctuation(s)
   s <- removeNumbers(s)
@@ -143,84 +113,21 @@ do_system.time <- function(what, args){
   ret
 }
 
-get_docterm_matrix_with_timing <- function(docs, 
-                               ngram_length=1,
-                               save_file="data/term_doc_matrix_%s_ngram.rds",
-                               save_file_df="data/term_doc_matrix_%s_ngram_df.rds") {
-  
-  save_file <- sprintf(save_file, ngram_length)
-  save_file_df <- sprintf(save_file_df, ngram_length)
-  # print("convert to data frame")
-  # tmp <- system.time ({
-  #   docs_df <- data.frame(text=unlist(sapply(docs, '[',"content")),stringsAsFactors=F)
-  # })
-  # print(tmp)
-  options(mc.cores=1)
-  
-  tokenizer <- function(x) {
-    # print(x)
-    # ngram::ngram_asweka(content(x), min=ngram_length, max=ngram_length)
-    # ngram(content(x), n=ngram_length)
-    # rownames(as.data.frame(unclass(textcnt(content(x),method="string",n=ngram_length))))
-    NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
-  }
-  if (ngram_length > 1) {
-    print("Generating doc/term matrix")
-    tmp <- system.time({
-      dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
-    })
-    print(tmp)
-  } else {
-    print("Generating doc/term matrix")
-    tmp <- system.time({dtm <- DocumentTermMatrix(docs)})
-    print(tmp)
-  }
-
-  print(sprintf("Saving docterm matrix to %s", save_file))
-  # verify the tokens are saved as strings and not as factors
-  saveRDS(dtm, save_file)
-
-  print("Most frequent words")
-  freq <- colSums(as.matrix(dtm))
-  freq <- sort(freq, decreasing=TRUE)
-  wf <- data.frame(word=names(freq), freq=freq)
-  
-  # verify the class of 'word' is character instead of 'factor'
-  # also remove the 'row.names' because it increases memory usage.
-  wf <- mutate(wf, word=as.character(word))
-  
-  print(sprintf("Saving docterm data frame to %s", save_file_df))
-  saveRDS(wf, save_file_df)
-  
-  print(head(wf))
-  
-  docterm_datums = list()
-  
-  # doc term matrix
-  docterm_datums$dtm <- dtm
-  
-  # sorted word frequency data.frame
-  docterm_datums$wf <- wf
-  
-  docterm_datums
-  
-  # sparse_filter=0.05
-  # dtms <- removeSparseTerms(dtm, 0.01)
-  # list(full=dtm, sparse=dtms)
-}
-
 get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
   options(mc.cores=1)
+  print(sprintf("get_docterm_matrix: %s-gram",ngram_length))
   
   tokenizer <- function(x) {
     NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
   }
+  print("generating docterm matrix")
   if (ngram_length > 1) {
       dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
   } else {
       dtm <- DocumentTermMatrix(docs)
   }
   
+  print("Generating term frequencies")
   freq <- colSums(as.matrix(dtm))
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
@@ -243,7 +150,7 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
     # 'join' with root counts and 'filter' by count
     wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
     # remove the 'root_count' column
-    wf <- subset(wf, select=x(root_count))
+    wf <- subset(wf, select=-c(root_count))
   } else {
     wf <- filter(wf, freq>min_frequency)
   }

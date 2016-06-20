@@ -67,20 +67,15 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   
   # generate_sample_files()
   if (is.null(docs)) {
+    print("loading corpus")
     docs <- load_sample_dircorpus()
+    print("preprocessing entries")
     docs <- preprocess_entries(docs)
   }
   
-  tmp <- system.time({
-    ngram_1 <- get_docterm_matrix(docs, 1)
-  })
-  print(tmp)
-  
-  tmp <- system.time({
-    ngram_2 <- get_docterm_matrix(docs, 2)
-  })
-  print(tmp)
-  
+  ngram_1 <- get_docterm_matrix(docs, 1)
+  ngram_2 <- get_docterm_matrix(docs, 2)
+
   # tmp <- system.time({
   #   # ngram_2$wf$root <- sapply(ngram_df_list$ngram_2$word, function(x) {unlist(strsplit(x, " "))[1]})
   #   ngram_2$wf$root <- sapply(ngram_2$wf$word, 
@@ -179,5 +174,27 @@ perform_search_in_dataframe <- function(ngram_df_list,
 
 save_ngram_df_list <- function(ngram_df_list, save_file="data/ngram_df_list.5.percent.rds") {
   saveRDS(ngram_df_list, "data/ngram_df_list.5.percent.rds")  
+}
+
+run_quiz_sentences <- function(ngram_df_list) {
+  queries <- c(
+    "The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
+    "You're the reason why I smile everyday. Can you follow me please? It would mean the",
+    "Hey sunshine, can you follow me and make me the",
+    "Very early observations on the Bills game: Offense still struggling but the",
+    "Go on a romantic date at the",
+    "Well I'm pretty sure my granny has some old bagpipes in her garage I'll dust them off and be on my",
+    "Ohhhhh #PointBreak is on tomorrow. Love that film and haven't seen it in quite some",
+    "After the ice bucket challenge Louis will push his long wet hair out of his eyes with his little",
+    "Be grateful for the good times and keep the faith during the",
+    "If this isn't the cutest thing you've ever seen, then you must be"
+  )
+  
+  for (query in queries) {
+    print("************")
+    print(query)
+    # multi_search_tree_with_data_frames(ngram_df_list, "I loVe data science!!!!")
+    multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
+  }
 }
 
