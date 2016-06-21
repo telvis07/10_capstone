@@ -102,6 +102,11 @@ preprocess_entries <- function(docs) {
   # docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
   docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
   docs <- remove_profanity(docs)
+  docs <- tm_map(docs, content_transformer(iconv), to="latin1", from="ASCII", sub="_TODO_")
+  docs <- tm_map(docs, content_transformer(gsub), 
+                 pattern="_TODO_", 
+                 replacement="",
+                 perl=T)
   docs
 }
 
