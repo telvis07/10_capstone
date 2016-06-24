@@ -23,8 +23,8 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     search_words = tail(words, i)
     print(search_words)
     ret = perform_search_in_dataframe(ngram_df_list = ngram_df_list,
-                                        words = search_words,
-                                        num_suggestions = num_suggestions,
+                                      words = search_words,
+                                      num_suggestions = num_suggestions,
                                       debug=F)
     
     ret <- filter(ret, ! word %in% stopwords("english"))
@@ -124,7 +124,14 @@ perform_search_in_dataframe <- function(ngram_df_list,
     
     # results <- filter(next_ngram_df, grepl(search_text, word))
     results <- filter(next_ngram_df, root==root_ngram_df$word)
+    results$word <- sapply(results$word, 
+                           function(x) {
+                             w <- unlist(strsplit(x, " ")); 
+                             tail(w,1)
+                           })
+    results <- filter(results, ! word %in% stopwords("english"))
     results <- results[order(results$freq, decreasing=T),]
+    
 
     if (debug){
       print(head(results))

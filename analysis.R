@@ -146,17 +146,17 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   wf <- mutate(wf, word=as.character(word))
   count_before <- nrow(wf)
   if (ngram_length > 1) {
-    print("Generating last word")
-    wf$last_word <- sapply(wf$word, 
-                              function(x) {
-                                w <- unlist(strsplit(x, " ")); 
-                                tail(w,1)
-                              })
-    
-    print("filtering words for english stop words")
-    
-    # never recommend a stop word
-    wf <- filter(wf, ! last_word %in% stopwords("english"))
+    # print("Generating last word")
+    # wf$last_word <- sapply(wf$word, 
+    #                           function(x) {
+    #                             w <- unlist(strsplit(x, " ")); 
+    #                             tail(w,1)
+    #                           })
+    # 
+    # print("filtering words for english stop words")
+    # 
+    # # never recommend a stop word
+    # wf <- filter(wf, ! last_word %in% stopwords("english"))
     
     # generate the root word
     print("generating root")
@@ -179,8 +179,8 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
     root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
     # 'join' with root counts and 'filter' by count
     wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
-    # remove the 'root_count' and 'last_word' column
-    wf <- subset(wf, select=-c(root_count, last_word))
+    # remove the 'root_count' column
+    wf <- subset(wf, select=-c(root_count))
   } else {
     wf <- filter(wf, freq>min_frequency)
   }
