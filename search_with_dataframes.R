@@ -26,6 +26,8 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
                                         words = search_words,
                                         num_suggestions = num_suggestions,
                                       debug=F)
+    
+    ret <- filter(ret, ! word %in% stopwords("english"))
 
     if(nrow(ret)) {
       recommended_words = rbind(recommended_words, ret)
