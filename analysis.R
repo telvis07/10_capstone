@@ -88,6 +88,7 @@ preprocess_single_string <- function(s) {
   s <- tolower(s)
   # s <- removeWords(s, stopwords("english"))
   # s <- removeWords(s, c('the', 'to', 'and', 'a', 'of'))
+  # s <- removeWords(s, c('the', 'a'))
   s <- stripWhitespace(s)
   # TODO: load the profanity DB
   s
@@ -102,6 +103,7 @@ preprocess_entries <- function(docs) {
   docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
   # docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
   # docs <- tm_map(docs, removeWords, c('the', 'to', 'and', 'a', 'of'))
+  # docs <- tm_map(docs, removeWords, c('the', 'a'))
   docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
   docs <- remove_profanity(docs)
   docs <- tm_map(docs, content_transformer(iconv), to="latin1", from="ASCII", sub="_TODO_")
@@ -144,6 +146,19 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   wf <- mutate(wf, word=as.character(word))
   count_before <- nrow(wf)
   if (ngram_length > 1) {
+    print("Generating last word")
+    wf$last_word <- sapply(wf$word, 
+                              function(x) {
+                                w <- unlist(strsplit(x, " ")); 
+                                tail(w,1)
+                              })
+    
+    print("filtering words for english stop words")
+    
+    # never recommend a stop word
+    wf <- filter(wf, ! last_word %in% stopwords("english"))
+    
+    # generate the root word
     print("generating root")
     wf$root <- sapply(wf$word, 
                       function(x) {
@@ -164,8 +179,8 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
     root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
     # 'join' with root counts and 'filter' by count
     wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
-    # remove the 'root_count' column
-    wf <- subset(wf, select=-c(root_count))
+    # remove the 'root_count' and 'last_word' column
+    wf <- subset(wf, select=-c(root_count, last_word))
   } else {
     wf <- filter(wf, freq>min_frequency)
   }
