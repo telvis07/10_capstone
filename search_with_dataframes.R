@@ -181,15 +181,24 @@ run_quiz_sentences <- function(ngram_df_list) {
     "bad",
     "insane"
   )
-  
+  i <- 1
+  num_correct <- 0
   for (query in queries) {
     print("************")
     print(query)
-    # multi_search_tree_with_data_frames(ngram_df_list, "I loVe data science!!!!")
-    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 30)
-    suggested_words <- res[1:3,"words"]
-    print(suggested_words)
-    # print(res)
+    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
+    suggested_words <- res[1:3,]$word
+    
+    correct <- answers[i] %in% suggested_words
+    if (correct) {
+      num_correct <- num_correct + 1
+    }
+    print(sprintf("suggested_words: %s, Correct: :%s", paste(suggested_words, collapse=","), correct))
+    i <- i+1
+    print("-----------")
+    print(res)
   }
+  print("************")
+  print(sprintf("Got %s of %s", num_correct, length(answers)))
 }
 

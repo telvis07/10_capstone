@@ -87,7 +87,7 @@ preprocess_single_string <- function(s) {
   s <- removeNumbers(s)
   s <- tolower(s)
   # s <- removeWords(s, stopwords("english"))
-  s <- removeWords(s, c('the', 'to', 'and', 'a', 'of'))
+  # s <- removeWords(s, c('the', 'to', 'and', 'a', 'of'))
   s <- stripWhitespace(s)
   # TODO: load the profanity DB
   s
@@ -101,7 +101,7 @@ preprocess_entries <- function(docs) {
   docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
   docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
   # docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
-  docs <- tm_map(docs, removeWords, c('the', 'to', 'and', 'a', 'of'))
+  # docs <- tm_map(docs, removeWords, c('the', 'to', 'and', 'a', 'of'))
   docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
   docs <- remove_profanity(docs)
   docs <- tm_map(docs, content_transformer(iconv), to="latin1", from="ASCII", sub="_TODO_")
