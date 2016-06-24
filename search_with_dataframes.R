@@ -13,10 +13,10 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
   recommended_words = data.frame()
   
   # check the last N words, based on number of grams
-  num_grams <- min(length(ngram_df_list)-1, length(words))
+  num_grams <- min(length(ngram_df_list), length(words))
 
   # for (i in seq_along(words)) {
-  for (i in seq(num_grams, 1, -1)){
+  for (i in seq(num_grams, 2, -1)){
     # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
     # consider only doing backoff queries if the full phrase 
     # returns no results.
@@ -36,23 +36,27 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     # }
   }
   
-  # MLE - maximum likelihood estimate
-  max_range = min(num_suggestions, nrow(recommended_words))
-  ord = order(recommended_words$likelihood, decreasing = TRUE)
-  recommended_words$word <- sapply(recommended_words$word, 
-                                   function(x) {
-                                     w <- unlist(strsplit(x, " ")); 
-                                     tail(w,1)
-                                   })
-  recommendations = recommended_words[ord,]
-  
-  # print recommended words
-  if (debug) {
-    print("recommended words....")
-    print(recommendations)
+  if(nrow(recommended_words)) {
+    # MLE - maximum likelihood estimate
+    max_range = min(num_suggestions, nrow(recommended_words))
+    ord = order(recommended_words$likelihood, decreasing = TRUE)
+    recommended_words$word <- sapply(recommended_words$word, 
+                                     function(x) {
+                                       w <- unlist(strsplit(x, " ")); 
+                                       tail(w,1)
+                                     })
+    
+    
+    # print recommended words
+    if (debug) {
+      print("recommended words....")
+      print(recommended_words[ord,])
+    }
+    
+    recommended_words <- recommended_words[ord,]
   }
   
-  recommendations
+  recommended_words
 }
 
 
@@ -73,104 +77,19 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
     docs <- preprocess_entries(docs)
   }
   
-  ngram_1 <- get_docterm_matrix(docs, 1)
-  ngram_2 <- get_docterm_matrix(docs, 2)
+  # ngram_1 <- get_docterm_matrix(docs, 1)
+  ngram_2 <- get_docterm_matrix(docs, 2, min_frequency = 5)
+  ngram_3 <- get_docterm_matrix(docs, 3, min_frequency = 5)
+  ngram_4 <- get_docterm_matrix(docs, 4, min_frequency = 5)
 
-  # tmp <- system.time({
-  #   # ngram_2$wf$root <- sapply(ngram_df_list$ngram_2$word, function(x) {unlist(strsplit(x, " "))[1]})
-  #   ngram_2$wf$root <- sapply(ngram_2$wf$word, 
-  #                             function(x) {
-  #                               w <- unlist(strsplit(x, " "))[1]; 
-  #                               paste(w, collapse = " ")
-  #                             })
-  # })
-  # print(tmp)
-  
-  ngram_3 <- get_docterm_matrix(docs, 3)
-  # ngram_3$wf$root <- sapply(ngram_3$wf$word, 
-  #                           function(x) {
-  #                               w <- unlist(strsplit(x, " "))[1:2]; 
-  #                               paste(w, collapse = " ")
-  #                             })
-  
-  ngram_4 <- get_docterm_matrix(docs, 4)
-  # ngram_4$wf$root <- sapply(ngram_4$wf$word, 
-  #                            function(x) {
-  #                              w <- unlist(strsplit(x, " "))[1:3]; 
-  #                              paste(w, collapse = " ")
-  #                            })
-  
-  # ngram_5 <- get_docterm_matrix(docs, 5)
-  # ngram_5$wf$root <- sapply(ngram_5$wf$word, 
-  #                           function(x) {
-  #                             w <- unlist(strsplit(x, " "))[1:4]; 
-  #                             paste(w, collapse = " ")
-  #                           })
   
   # Combine all the word frequency data.frames
-  ngram_df_list = list("ngram_1"=ngram_1$wf, 
-                        "ngram_2"=ngram_2$wf, 
-                        "ngram_3"=ngram_3$wf, 
+  ngram_df_list = list( "ngram_2"=ngram_2$wf, 
+                        "ngram_3"=ngram_3$wf,
                         "ngram_4"=ngram_4$wf)
 
   ngram_df_list
   
-}
-
-perform_search_in_dataframe_by_root_outdegree <- function(ngram_df_list, 
-                                        words, 
-                                        num_suggestions = 5, 
-                                        min_frequency=0,
-                                        debug=FALSE) {
-  recommended_words = data.frame()
-  joined_words <- paste(words, collapse = " ")
-  
-  # finds all words with
-  gram_length <- length(words)
-  ngram_df <- ngram_df_list[[gram_length]]
-  root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
-  if (debug){
-    print("root")
-    print(root_ngram_df)
-  }
-  
-  if (nrow(root_ngram_df) > 0){
-    # there is a word path in the tree corresponding to the search phrase
-    next_ngram_df <- ngram_df_list[[gram_length+1]]
-    search_text <- paste0("^", joined_words, " ")
-    if (debug) {
-      print(search_text)
-    }
-    
-    # results <- filter(next_ngram_df, grepl(search_text, word))
-    results <- filter(next_ngram_df, root==root_ngram_df$word)
-    results <- results[order(results$freq, decreasing=T),]
-    
-    if (debug){
-      print(head(results))
-    }
-    if (nrow(results) > 0){
-      # the word path exists and there are words that follow
-      
-      # print(sprintf("phrase freq: %s", subtree$freq))
-      max_range = min(num_suggestions, nrow(results))
-      recommended_words = results[1:max_range,]
-      
-      # Calculate the likelihood that this word follows the search phrase.
-      # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
-      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,"freq"] 
-    }
-  } 
-  
-  if (nrow(recommended_words) == 0) {
-    print(sprintf("No suggestions for word after: '%s'", paste(words, collapse=" ")))
-  }
-  
-  if(debug){
-    print("recommended words")
-    print(recommended_words)
-  }
-  recommended_words
 }
 
 perform_search_in_dataframe <- function(ngram_df_list, 
@@ -183,7 +102,10 @@ perform_search_in_dataframe <- function(ngram_df_list,
   
   # finds all words with
   gram_length <- length(words)
-  ngram_df <- ngram_df_list[[gram_length]]
+  root_ngram_index <- gram_length - 1
+  next_ngram_index <- gram_length
+  
+  ngram_df <- ngram_df_list[[root_ngram_index]]
   root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
   if (debug){
     print("root")
@@ -192,7 +114,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
   
   if (nrow(root_ngram_df) > 0){
     # there is a word path in the tree corresponding to the search phrase
-    next_ngram_df <- ngram_df_list[[gram_length+1]]
+    next_ngram_df <- ngram_df_list[[next_ngram_index]]
     search_text <- paste0("^", joined_words, " ")
     if (debug) {
       print(search_text)
@@ -264,8 +186,10 @@ run_quiz_sentences <- function(ngram_df_list) {
     print("************")
     print(query)
     # multi_search_tree_with_data_frames(ngram_df_list, "I loVe data science!!!!")
-    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
-    print(res)
+    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 30)
+    suggested_words <- res[1:3,"words"]
+    print(suggested_words)
+    # print(res)
   }
 }
 

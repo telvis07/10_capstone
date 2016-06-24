@@ -87,6 +87,7 @@ preprocess_single_string <- function(s) {
   s <- removeNumbers(s)
   s <- tolower(s)
   # s <- removeWords(s, stopwords("english"))
+  s <- removeWords(s, c('the', 'to', 'and', 'a', 'of'))
   s <- stripWhitespace(s)
   # TODO: load the profanity DB
   s
@@ -100,6 +101,7 @@ preprocess_entries <- function(docs) {
   docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
   docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
   # docs <- tm_map(docs, removeWords, stopwords("english"))   # *Removing "stopwords" 
+  docs <- tm_map(docs, removeWords, c('the', 'to', 'and', 'a', 'of'))
   docs <- tm_map(docs, stripWhitespace)  # *Stripping whitespace
   docs <- remove_profanity(docs)
   docs <- tm_map(docs, content_transformer(iconv), to="latin1", from="ASCII", sub="_TODO_")
@@ -118,9 +120,9 @@ do_system.time <- function(what, args){
   ret
 }
 
-get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
+get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_words=NULL) {
   options(mc.cores=1)
-  print(sprintf("get_docterm_matrix: %s-gram",ngram_length))
+  print(sprintf("get_docterm_matrix: %s-gram", ngram_length))
   
   tokenizer <- function(x) {
     NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
@@ -149,6 +151,14 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
                         paste(w, collapse = " ")
                       })
     
+    # filter by words in parent
+    if (! is.null(parent_words)){
+      print("filtering for words not in parent db")
+      wf <- filter(wf, root %in% parent_words)
+      count_after <- nrow(wf)
+      print(sprintf("parent db removed %s rows %-grams", count_before - count_after, ngram_length))
+    }
+    
     print("filter by most frequent root")
     root_counts <- summarize(group_by(wf, root), root_count=length(root))
     root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
@@ -161,7 +171,7 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1) {
   }
   
   count_after <- nrow(wf)
-  print(sprintf("Removed %s rows %-grams", count_before - count_after, ngram_length))
+  print(sprintf("Removed %s rows %-grams. Remaining: %s", count_before - count_after, ngram_length, count_after))
   
   # return term/doc matrix and word frequency data.frame in a list
   docterm_datums = list()

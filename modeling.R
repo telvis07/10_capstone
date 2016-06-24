@@ -51,35 +51,6 @@ build_tree <- function(all_ngram_df) {
   ngram_tree
 }
 
-build_tree_with_timing <- function(all_ngram_df) {
-  # tmp <- system.time({
-  #   print(sprintf("rows before: %s", nrow(datums$df_ngram_all)))
-  #   all_data <- filter(datums$df_ngram_all, freq > min_frequency)
-  #   print(sprintf("rows after: %s", nrow(all_data)))
-  # })
-  # print(tmp)
-  # print("deleting datums - to make room for the tree")
-  # rm(datums)
-  
-  tmp <- system.time({
-    all_ngram_df$pathString <- sapply(all_ngram_df$word, gen_path_string)
-    ngram_tree <- as.Node(all_ngram_df)
-  })
-  print(tmp)
-  
-  # the ngram tokenization didn't get frequencies for 1-grams.
-  # populate it from the tree
-  for (node in ngram_tree$children){ 
-    node$freq <- sum(node$Get("freq"), na.rm = TRUE) 
-  }
-  
-  # > sum(node$Get("freq"), na.rm =TRUE)
-  # [1] 138429
-  # > sum(last_root_word_df$freq)
-  # [1] 138429
-  ngram_tree
-}
-
 gen_path_string <- function (x) {
   paste("start", gsub(" ", "/", x), sep="/")
 }
