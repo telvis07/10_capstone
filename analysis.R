@@ -174,13 +174,16 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
       print(sprintf("parent db removed %s rows %-grams", count_before - count_after, ngram_length))
     }
     
-    print("filter by most frequent root")
-    root_counts <- summarize(group_by(wf, root), root_count=length(root))
-    root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
-    # 'join' with root counts and 'filter' by count
-    wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
-    # remove the 'root_count' column
-    wf <- subset(wf, select=-c(root_count))
+    print("prune by cover percentage")
+    wf <- prune_ngram_df_by_cover_percentage(wf, .60)
+    
+    # print("filter by most frequent root")
+    # root_counts <- summarize(group_by(wf, root), root_count=length(root))
+    # root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
+    # # 'join' with root counts and 'filter' by count
+    # wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
+    # # remove the 'root_count' column
+    # wf <- subset(wf, select=-c(root_count))
   } else {
     wf <- filter(wf, freq>min_frequency)
   }
@@ -200,7 +203,7 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   docterm_datums
 }
 
-prune_ngram_df_by_cover_percentage <- function(df, save_file, percentage) {
+prune_ngram_df_by_cover_percentage <- function(df, percentage) {
   # prune_ngram_df_by_cover_percentage(datums$df_ngram_4, "data/pruned_50p_term_doc_matrix_4_ngram_df.rds", .50)
   sums <- cumsum(df$freq)
   cover <- which(sums > sum(df$freq) * percentage)[1]
@@ -210,8 +213,7 @@ prune_ngram_df_by_cover_percentage <- function(df, save_file, percentage) {
                 cover/nrow(df)*100,
                 percentage*100))
   
-  print(sprintf("Saving pruned docterm data frame to %s", save_file))
-  saveRDS(df[1:cover,], save_file)
+  df[1:cover,]
 }
 
 merge_ngram_data <- function() {

@@ -81,8 +81,8 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   
   # ngram_1 <- get_docterm_matrix(docs, 1)
   ngram_2 <- get_docterm_matrix(docs, 2, min_frequency = 5)
-  ngram_3 <- get_docterm_matrix(docs, 3, min_frequency = 5)
-  ngram_4 <- get_docterm_matrix(docs, 4, min_frequency = 5)
+  ngram_3 <- get_docterm_matrix(docs, 3, min_frequency = 5, parent_words=ngram_2$wf$word)
+  ngram_4 <- get_docterm_matrix(docs, 4, min_frequency = 5, parent_words=ngram_3$wf$word)
 
   
   # Combine all the word frequency data.frames
