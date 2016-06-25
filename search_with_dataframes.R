@@ -101,6 +101,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
                                         debug=FALSE) {
   recommended_words = data.frame()
   joined_words <- paste(words, collapse = " ")
+  print(sprintf("joined words: %s", joined_words))
   
   # finds all words with
   gram_length <- length(words)
