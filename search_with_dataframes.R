@@ -74,7 +74,7 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   # generate_sample_files()
   if (is.null(docs)) {
     print("loading corpus")
-    docs <- load_sample_dircorpus()
+    docs <- load_sample_dircorpus(sampledir="./data/final/en_US/all/")
     print("preprocessing entries")
     docs <- preprocess_entries(docs)
   }
