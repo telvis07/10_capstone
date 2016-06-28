@@ -115,25 +115,18 @@ do_system.time <- function(what, args){
   ret
 }
 
-get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_words=NULL) {
-  options(mc.cores=1)
+get_docterm_matrix <- function(docs, 
+                               ngram_length=1, 
+                               parent_words=NULL, 
+                               prune_cover_percentage=0.60) {
+  
   print(sprintf("get_docterm_matrix: %s-gram", ngram_length))
   
-  # tokenizer <- function(x) {
-  #   NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
-  # }
-  # print("generating docterm matrix")
-  # if (ngram_length > 1) {
-  #     dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
-  # } else {
-  #     dtm <- DocumentTermMatrix(docs)
-  # }
-  
-  dfm()
-  
+  # https://cran.r-project.org/web/packages/quanteda/vignettes/quickstart.html#document-feature-matrix-analysis-tools
+  dtm <- dfm(docs, what="fasterword", ngrams=ngram_length, concatenator = " ")
   
   print("Generating term frequencies")
-  freq <- colSums(as.matrix(dtm))
+  freq <- colSums(dtm)
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.frame(word=names(freq), freq=freq)
   
@@ -141,21 +134,8 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   # also remove the 'row.names' because it increases memory usage.
   wf <- mutate(wf, word=as.character(word))
   count_before <- nrow(wf)
+  
   if (ngram_length > 1) {
-    # print("Generating last word")
-    # wf$last_word <- sapply(wf$word, 
-    #                           function(x) {
-    #                             w <- unlist(strsplit(x, " ")); 
-    #                             tail(w,1)
-    #                           })
-    # 
-    # print("filtering words for english stop words")
-    # 
-    # # never recommend a stop word
-    # wf <- filter(wf, ! last_word %in% stopwords("english"))
-    
-    dfm <- dfm(docs, what="fastestword", ngrams=2)
-    
     # generate the root word
     print("generating root")
     wf$root <- sapply(wf$word, 
@@ -169,19 +149,13 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
       print("filtering for words not in parent db")
       wf <- filter(wf, root %in% parent_words)
       count_after <- nrow(wf)
-      print(sprintf("parent db removed %s rows %-grams", count_before - count_after, ngram_length))
+      print(sprintf("parent db removed %s rows %s-grams. %s remain", count_before - count_after, 
+                    ngram_length, count_after))
     }
     
     print("prune by cover percentage")
-    wf <- prune_ngram_df_by_cover_percentage(wf, .60)
+    wf <- prune_ngram_df_by_cover_percentage(wf, prune_cover_percentage)
     
-    # print("filter by most frequent root")
-    # root_counts <- summarize(group_by(wf, root), root_count=length(root))
-    # root_counts <- root_counts[order(root_counts$root_count, decreasing = T),]
-    # # 'join' with root counts and 'filter' by count
-    # wf <- merge(wf, filter(root_counts, root_count>min_frequency), by="root")
-    # # remove the 'root_count' column
-    # wf <- subset(wf, select=-c(root_count))
   } else {
     wf <- filter(wf, freq>min_frequency)
   }
@@ -191,9 +165,6 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   
   # return term/doc matrix and word frequency data.frame in a list
   docterm_datums = list()
-  
-  # doc term matrix
-  # docterm_datums$dtm <- dtm
   
   # sorted word frequency data.frame
   docterm_datums$wf <- wf

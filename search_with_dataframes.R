@@ -1,6 +1,7 @@
 # searching using data.frames
 source("analysis.R")
 source("sample_data.R")
+library(quanteda)
 
 multi_search_tree_with_data_frames <- function(ngram_df_list, 
                                                raw_phrase, 
@@ -75,19 +76,21 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL, doc_dir="./data/
   # 1% : ./data/final/en_US/sample.1.percent
   # 25% : ./data/final/en_US/sample.25 
   # 100% : ./data/final/en_US/all
+  # ngram_df_list <- ngram_language_modeling_with_data_frames(doc_dir = "./data/final/en_US/sample.25")
   
   # generate_sample_files()
   if (is.null(docs)) {
     print("loading corpus")
-    docs <- load_sample_dircorpus(sampledir=doc_dir)
+    docs <- load_sample_vec_corpus(sampledir=doc_dir)
     print("preprocessing entries")
     docs <- preprocess_entries(docs)
+    docs <- corpus(docs)
   }
   
   # ngram_1 <- get_docterm_matrix(docs, 1)
-  ngram_2 <- get_docterm_matrix(docs, 2, min_frequency = 5)
-  ngram_3 <- get_docterm_matrix(docs, 3, min_frequency = 5, parent_words=ngram_2$wf$word)
-  ngram_4 <- get_docterm_matrix(docs, 4, min_frequency = 5, parent_words=ngram_3$wf$word)
+  ngram_2 <- get_docterm_matrix(docs, 2)
+  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=ngram_2$wf$word)
+  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=ngram_3$wf$word)
 
   
   # Combine all the word frequency data.frames
