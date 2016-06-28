@@ -257,6 +257,10 @@ hacking_with_quantenda <- function() {
   #
   summary(docs)
   dtm <- dfm(docs, what="fasterword", ngrams=2, concatenator = " ")
+  freq <- colSums(dtm)
+  freq <- sort(freq, decreasing=TRUE)
+  wf <- data.frame(word=names(freq), freq=freq)
+  
   dtm[,1:5]
   topfeatures(dtm, 20)
   plot(dtm, max.words = 20, colors = brewer.pal(6, "Dark2"), scale = c(8, .5))
