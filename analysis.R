@@ -89,7 +89,7 @@ preprocess_single_string <- function(s) {
 
 preprocess_entries <- function(docs) {
   
-  options(mc.cores=4)
+  options(mc.cores=1)
   
   docs <- tm_map(docs, removePunctuation)  # *Removing punctuation:*  
   docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
