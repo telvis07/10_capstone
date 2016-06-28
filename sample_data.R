@@ -33,7 +33,7 @@ generate_sample_files <- function() {
                        "./data/final/en_US/sample/en_US.news.txt")
 }
 
-load_sample_dircorpus <- function(sampledir="./data/final/en_US/sample/", 
+load_sample_dircorpus <- function(sampledir="./data/final/en_US/sample.1.percent/", 
                                   save_file=NULL) {
   docs <- Corpus(DirSource(sampledir),
                  readerControl = list(
@@ -53,19 +53,16 @@ newline_text_file_to_corpus <- function(filename) {
   t_corpus
 }
 
-load_sample_vec_corpus <- function(save_file="data/sample_vec_corpus.rds") {
-  tmp <- system.time({
-    print("reading twitter")
-    tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.twitter.txt")
-    print("reading blogs")
-    blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.blogs.txt")
-    print("reading news")
-    news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample/en_US.news.txt")
-    print("Joining data")
-    docs <- c(tweets, blogs, news)
-    print(sprintf("Saving vector corpus to %s", save_file))
-    saveRDS(docs, save_file)
-  })
-  print(tmp)
+load_sample_vec_corpus <- function(sampledir="./data/final/en_US/sample.1.percent/") {
+
+  print("reading twitter")
+  tweets <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.twitter.txt"))
+  print("reading blogs")
+  blogs <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.blogs.txt"))
+  print("reading news")
+  news <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.news.txt"))
+  print("Joining data")
+  docs <- c(tweets, blogs, news)
+
   docs
 }

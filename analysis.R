@@ -6,9 +6,9 @@ library(cluster)
 # library(fpc)
 library(RWeka)
 library(timeit)
-library(ngram)
-library(tau)
 library(dplyr)
+library(quanteda)
+source("sample_data.R")
 
 # setwd("/Users/telvis/work/datasciencecoursera/10_capstone")
 
@@ -46,13 +46,6 @@ add_meta_data_to_docs <- function(tm_corpus, tag, value) {
     x
   })
   tm_corpus
-}
-
-newline_text_file_to_corpus <- function(filename,
-                                        nlines=10) {
-  lines <- scan(file=filename, what="", sep="\n", nlines = nlines)
-  t_corpus <- Corpus(VectorSource(lines))
-  t_corpus
 }
 
 load_all_data <- function(nlines=0, procsess=FALSE) {
@@ -126,15 +119,18 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
   options(mc.cores=1)
   print(sprintf("get_docterm_matrix: %s-gram", ngram_length))
   
-  tokenizer <- function(x) {
-    NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
-  }
-  print("generating docterm matrix")
-  if (ngram_length > 1) {
-      dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
-  } else {
-      dtm <- DocumentTermMatrix(docs)
-  }
+  # tokenizer <- function(x) {
+  #   NGramTokenizer(x, Weka_control(min = ngram_length, max = ngram_length)) # create n-grams
+  # }
+  # print("generating docterm matrix")
+  # if (ngram_length > 1) {
+  #     dtm <- DocumentTermMatrix(docs, control = list( tokenize=tokenizer))
+  # } else {
+  #     dtm <- DocumentTermMatrix(docs)
+  # }
+  
+  dfm()
+  
   
   print("Generating term frequencies")
   freq <- colSums(as.matrix(dtm))
@@ -157,6 +153,8 @@ get_docterm_matrix <- function(docs, ngram_length=1, min_frequency=1, parent_wor
     # 
     # # never recommend a stop word
     # wf <- filter(wf, ! last_word %in% stopwords("english"))
+    
+    dfm <- dfm(docs, what="fastestword", ngrams=2)
     
     # generate the root word
     print("generating root")
@@ -234,5 +232,37 @@ merge_ngram_data <- function() {
   save_file = "data/pruned_50p_term_doc_matrix_all_ngram_df.rds"
   print(sprintf("Saving merged docterm data frame to %s", save_file))
   saveRDS(datums$all_df, save_file)
+}
+
+hacking_with_quantenda <- function() {
+  # steps from : https://cran.r-project.org/web/packages/quanteda/vignettes/quickstart.html
+  
+  # doc_dir <- "./data/final/en_US/sample.1.percent/"
+  # docs <- load_sample_dircorpus(sampledir=doc_dir)
+  # docs <- preprocess_entries(docs)
+  # docs <- corpus(docs)
+  
+  tweets <- newline_text_file_to_corpus(filename="./data/final/en_US/sample.1.percent/en_US.twitter.txt")
+  blogs <- newline_text_file_to_corpus(filename="./data/final/en_US/sample.1.percent/en_US.blogs.txt")
+  news <- newline_text_file_to_corpus(filename="./data/final/en_US/sample.1.percent/en_US.news.txt")
+  docs <- c(tweets, blogs, news)
+  docs <- preprocess_entries(docs)
+  docs <- corpus(docs)
+
+  # From: http://stackoverflow.com/questions/31570437/really-fast-word-ngram-vectorization-in-r
+  # toks <- tokenize(docs, what="fasterword")
+  # toks2 <- ngrams(toks, n = 2, concatenator = " ")
+  # ngram_2 <- dfm(toks2, verbose = FALSE)
+
+  #
+  summary(docs)
+  dtm <- dfm(docs, what="fasterword", ngrams=2, concatenator = " ")
+  dtm[,1:5]
+  topfeatures(dtm, 20)
+  plot(dtm, max.words = 20, colors = brewer.pal(6, "Dark2"), scale = c(8, .5))
+  
+  # https://github.com/kbenoit/quanteda/blob/master/R/ngrams.R
+  # https://github.com/kbenoit/quanteda/issues/149
+  # https://github.com/lmullen/tokenizers
 }
 

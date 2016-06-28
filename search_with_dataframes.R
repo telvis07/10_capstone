@@ -62,7 +62,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
 }
 
 
-ngram_language_modeling_with_data_frames <- function(docs=NULL) {
+ngram_language_modeling_with_data_frames <- function(docs=NULL, doc_dir="./data/final/en_US/sample.1.percent/") {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
   # the different words which follow that word history. As language models are predictive
@@ -71,10 +71,15 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL) {
   # sequence of words, which is better known as the maximum likelihood estimator (see
   #                                                                               [Manning and Sch¨utze, 1999]):
   
+  # dirs
+  # 1% : ./data/final/en_US/sample.1.percent
+  # 25% : ./data/final/en_US/sample.25 
+  # 100% : ./data/final/en_US/all
+  
   # generate_sample_files()
   if (is.null(docs)) {
     print("loading corpus")
-    docs <- load_sample_dircorpus(sampledir="./data/final/en_US/all/")
+    docs <- load_sample_dircorpus(sampledir=doc_dir)
     print("preprocessing entries")
     docs <- preprocess_entries(docs)
   }
