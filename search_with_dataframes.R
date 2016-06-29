@@ -73,10 +73,10 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL, doc_dir="./data/
   #                                                                               [Manning and Sch¨utze, 1999]):
   
   # dirs
-  # 1% : ./data/final/en_US/sample.1.percent
-  # 25% : ./data/final/en_US/sample.25 
-  # 100% : ./data/final/en_US/all
-  # ngram_df_list <- ngram_language_modeling_with_data_frames(doc_dir = "./data/final/en_US/sample.25")
+  # 1% : "./data/final/en_US/sample.1.percent"
+  # 25% : "./data/final/en_US/sample.25" 
+  # 100% : "./data/final/en_US/all"
+  # ngram_df_list <- ngram_language_modeling_with_data_frames(doc_dir = )
   
   # generate_sample_files()
   if (is.null(docs)) {

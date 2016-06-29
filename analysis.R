@@ -2,9 +2,7 @@ library(tm)
 library(SnowballC)
 library(ggplot2)  
 library(wordcloud) 
-library(cluster)   
-# library(fpc)
-library(RWeka)
+library(data.table)
 library(timeit)
 library(dplyr)
 library(quanteda)
@@ -128,21 +126,30 @@ get_docterm_matrix <- function(docs,
   print("Generating term frequencies")
   freq <- colSums(dtm)
   freq <- sort(freq, decreasing=TRUE)
-  wf <- data.frame(word=names(freq), freq=freq)
+  wf <- data.table(word=names(freq), freq=freq, keep.rownames=F)
   
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.
-  wf <- mutate(wf, word=as.character(word))
+  # wf <- mutate(wf, word=as.character(word))
+  wf[,word:=as.character(word)]
+  setkey(wf, word)
   count_before <- nrow(wf)
   
   if (ngram_length > 1) {
     # generate the root word
     print("generating root")
-    wf$root <- sapply(wf$word, 
-                      function(x) {
-                        w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
-                        paste(w, collapse = " ")
-                      })
+    # wf$root <- sapply(wf$word, 
+    #                   function(x) {
+    #                     w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
+    #                     paste(w, collapse = " ")
+    #                   })
+    wf[,root:= {
+      sapply(wf$word, 
+             function(x) {
+               w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
+               paste(w, collapse = " ")
+             })
+    }]
     
     # filter by words in parent
     if (! is.null(parent_words)){
@@ -183,26 +190,6 @@ prune_ngram_df_by_cover_percentage <- function(df, percentage) {
                 percentage*100))
   
   df[1:cover,]
-}
-
-merge_ngram_data <- function() {
-  # Datums after pruning
-  datums <- list()
-  datums$df_ngram_2 <- readRDS("data/pruned_50p_term_doc_matrix_2_ngram_df.rds")
-  datums$df_ngram_2 <- mutate(datums$df_ngram_2, 
-                              word=as.character(word))
-  datums$df_ngram_3 <- readRDS("data/pruned_50p_term_doc_matrix_3_ngram_df.rds")
-  datums$df_ngram_3 <- mutate(datums$df_ngram_3, 
-                              word=as.character(word))
-  datums$df_ngram_4 <- readRDS("data/pruned_50p_term_doc_matrix_4_ngram_df.rds")
-  datums$df_ngram_4 <- mutate(datums$df_ngram_4, 
-                              word=as.character(word))
-  datums$all_df <- rbind(datums$df_ngram_2,
-                         datums$df_ngram_3,
-                         datums$df_ngram_4)
-  save_file = "data/pruned_50p_term_doc_matrix_all_ngram_df.rds"
-  print(sprintf("Saving merged docterm data frame to %s", save_file))
-  saveRDS(datums$all_df, save_file)
 }
 
 hacking_with_quantenda <- function() {
