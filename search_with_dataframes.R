@@ -223,22 +223,22 @@ run_quiz_sentences <- function(ngram_df_list) {
 build_final_model <- function() {
   doc_dir <- "./data/final/en_US/all"
   docs <- load_sample_vec_corpus(sampledir=doc_dir)
-  saveRDS("data/docs_vec_corpus.rds")
+  saveRDS(docs, "data/docs_vec_corpus.rds")
   # reinit()
   
   docs <- readRDS("data/docs_vec_corpus.rds")
   docs <- preprocess_entries(docs)
-  saveRDS("data/preprocessed_docs.rds")
+  saveRDS(docs, "data/preprocessed_docs.rds")
   # reinit()
   
   docs <- readRDS("data/preprocessed_docs.rds")
   docs <- corpus(docs)
-  saveRDS("data/quanteda_corpus_docs.rds")
+  saveRDS(docs, "data/quanteda_corpus_docs.rds")
   # reinit()
   
   docs <- readRDS("data/quanteda_corpus_docs.rds")
   ngram_df_list <- ngram_language_modeling_with_data_frames(docs=docs)
-  saveRDS("data/ngram_df_list.rds")
+  saveRDS(ngram_df_list, "data/ngram_df_list.rds")
   # reinit()
   
   ngram_df_list <- readRDS("data/ngram_df_list.rds")

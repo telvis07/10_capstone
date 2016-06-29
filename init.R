@@ -30,10 +30,10 @@ reinit_environment <- function() {
     
     # datums$df_ngram_all <- readRDS("data/pruned_50p_term_doc_matrix_all_ngram_minfreq_100_df.rds")
     # datums$ngram_tree <- readRDS("data/ngram_all_minfreq_175_tree.rds")
-    ngram_df_list <- readRDS("data/ngram_df_list.5.percent.rds")
+    # ngram_df_list <- readRDS("data/ngram_df_list.5.percent.rds")
   })
   print(tmp)
-  ngram_df_list
+  # ngram_df_list
 }
 
 # from http://stackoverflow.com/questions/1358003/tricks-to-manage-the-available-memory-in-an-r-session
@@ -72,5 +72,5 @@ ngram_df_list <- reinit_environment()
 # source("analysis.R")
 # source("explore.R")
 # source("sample_data.R")
-source("search_with_dataframes.R")
+# source("search_with_dataframes.R")
 print(lsos())
