@@ -83,7 +83,7 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   # generate_sample_files()
   if (is.null(docs)) {
     print("loading corpus")
-    docs <- load_sample_vec_corpus(sampledir=doc_dir)
+    docs <- load_sample_vec_corpus(sample_dir=doc_dir)
     print("preprocessing entries")
     docs <- preprocess_entries(docs)
     docs <- corpus(docs)

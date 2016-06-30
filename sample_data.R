@@ -1,10 +1,12 @@
 library(tm)
 
 # sample the datasci dir
-sample_capstone_data <- function(fn, outfn, sample_len, seed) {
+sample_capstone_data <- function(fn, outfn, sample_len, seed=NULL) {
   print(sprintf("Reading %s", fn))
   lines <- readLines(fn)
-  set.seed(seed)
+  if (!is.null(seed)){
+    set.seed(seed)
+  }
   # sample.int
   # 
   print(sprintf("Read %s Length %s", fn, length(lines)))
