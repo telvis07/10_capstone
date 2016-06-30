@@ -154,7 +154,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
       
       # Calculate the likelihood that this word follows the search phrase.
       # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
-      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,freq] 
+      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,]$freq 
     }
   } 
   
@@ -173,7 +173,74 @@ save_ngram_df_list <- function(ngram_df_list, save_file="data/ngram_df_list.25.p
   saveRDS(ngram_df_list, save_file)  
 }
 
-run_quiz_sentences <- function(ngram_df_list) {
+run_quiz_sentences <- function(ngram_df_list, quiz=T) {
+  
+  if (quiz) {
+    test_queries_df <- generate_quiz_1_data()
+  } else {
+    test_queries_df <- generate_test_data()
+  }
+  
+  queries <- test_queries_df$queries
+  answers <- test_queries_df$answers
+  
+  missed_queries <- c()
+  correct_answers <- c()
+  model_answers <- c()
+    
+  i <- 1
+  num_correct <- 0
+  for (query in queries) {
+    print("************")
+    print(query)
+    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
+    suggested_words <- res[1:3,]$word
+    
+    correct <- answers[i] %in% suggested_words
+    if (correct) {
+      num_correct <- num_correct + 1
+    } else {
+      missed_queries <- c(missed_queries, query)
+      correct_answers <- c(correct_answers, answers[i])
+      model_answers <- c(model_answers, paste(suggested_words, collapse=","))
+    }
+    print(sprintf("suggested_words: %s, Correct: :%s", paste(suggested_words, collapse=","), correct))
+    i <- i+1
+    print("-----------")
+    print(res)
+  }
+  print("************")
+  print(sprintf("Got %s of %s", num_correct, length(answers)))
+  data.frame(missed_queries=missed_queries, correct_answers=correct_answers, model_answers=model_answers)
+}
+
+
+generate_test_data <- function(sample_dir = "./data/final/en_US/test_sample", num_lines=25) {
+  queries <- c()
+  answers <- c()
+  
+  for (line in readLines(file.path(sample_dir, "en_US.twitter.txt"),  n=num_lines)) {
+    s <- removePunctuation(line)
+    s <- tolower(s)
+    s <- removeNumbers(s)
+    s <- stripWhitespace(s)
+    s <- stringi::stri_split_charclass(s, "\\p{WHITE_SPACE}")
+    s <- lapply(s, function(x) x <- x[which(x != "")])
+    s <- unlist(s)
+    
+    if (length(s) < 3)
+      next
+
+    query <- paste0(head(s, length(s)-1), collapse = " ")
+    answer <- tail(s, 1)
+    queries <- c(queries, query)
+    answers <- c(answers, answer)
+  }
+  
+  data.frame(queries=queries, answers=answers, stringsAsFactors = F)
+}
+
+generate_quiz_1_data <- function() {
   queries <- c(
     "The guy in front of me just bought a pound of bacon, a bouquet, and a case of",
     "You're the reason why I smile everyday. Can you follow me please? It would mean the",
@@ -186,7 +253,7 @@ run_quiz_sentences <- function(ngram_df_list) {
     "Be grateful for the good times and keep the faith during the",
     "If this isn't the cutest thing you've ever seen, then you must be"
   )
-  
+
   answers <- c(
     "beer",
     "world",
@@ -199,25 +266,28 @@ run_quiz_sentences <- function(ngram_df_list) {
     "bad",
     "insane"
   )
-  i <- 1
-  num_correct <- 0
-  for (query in queries) {
-    print("************")
-    print(query)
-    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
-    suggested_words <- res[1:3,]$word
-    
-    correct <- answers[i] %in% suggested_words
-    if (correct) {
-      num_correct <- num_correct + 1
-    }
-    print(sprintf("suggested_words: %s, Correct: :%s", paste(suggested_words, collapse=","), correct))
-    i <- i+1
-    print("-----------")
-    print(res)
-  }
-  print("************")
-  print(sprintf("Got %s of %s", num_correct, length(answers)))
+  data.frame(queries=queries, answers=answers, stringsAsFactors = F)
+
+}
+
+
+store_datatables <- function(ngram_df_list) {
+  write.table(ngram_df_list$ngram_2, "data/ngram_df_list_ngram_2.csv")
+  write.table(ngram_df_list$ngram_3, "data/ngram_df_list_ngram_3.csv")
+  write.table(ngram_df_list$ngram_4, "data/ngram_df_list_ngram_4.csv")
+}
+
+load_datatables <- function(){
+  ngram_2 <- read.table( "data/ngram_df_list_ngram_2.csv", stringsAsFactors = F)
+  ngram_3 <- read.table( "data/ngram_df_list_ngram_3.csv", stringsAsFactors = F)
+  ngram_4 <- read.table( "data/ngram_df_list_ngram_4.csv", stringsAsFactors = F)
+  
+  # Combine all the word frequency data.frames
+  ngram_df_list = list( "ngram_2"=ngram_2, 
+                        "ngram_3"=ngram_3,
+                        "ngram_4"=ngram_4)
+  
+  ngram_df_list
 }
 
 build_final_model <- function() {

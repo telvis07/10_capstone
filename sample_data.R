@@ -1,10 +1,10 @@
 library(tm)
 
 # sample the datasci dir
-sample_capstone_data <- function(fn, outfn, sample_len=0.25) {
+sample_capstone_data <- function(fn, outfn, sample_len, seed) {
   print(sprintf("Reading %s", fn))
   lines <- readLines(fn)
-  set.seed(123)
+  set.seed(seed)
   # sample.int
   # 
   print(sprintf("Read %s Length %s", fn, length(lines)))
@@ -16,8 +16,13 @@ sample_capstone_data <- function(fn, outfn, sample_len=0.25) {
 }
 
 
-generate_sample_files <- function() {
-  sample_dir <- "./data/final/en_US/sample"
+generate_sample_files <- function(sample_dir = "./data/final/en_US/test_sample",
+                                  sample_len=0.01,
+                                  seed=123) {
+  
+  # to generate test data
+  # generate_sample_files(sample_dir = "./data/final/en_US/test_sample, seed=4567)
+  
   
   # check for data zip
   if (!file.exists(sample_dir)){
@@ -25,17 +30,23 @@ generate_sample_files <- function() {
     dir.create(sample_dir)
   }
   
-  sample_capstone_data("./data/final/en_US/en_US.twitter.txt",
-                       "./data/final/en_US/sample/en_US.twitter.txt")
-  sample_capstone_data("./data/final/en_US/en_US.blogs.txt",
-                       "./data/final/en_US/sample/en_US.blogs.txt")
-  sample_capstone_data("./data/final/en_US/en_US.news.txt",
-                       "./data/final/en_US/sample/en_US.news.txt")
+  sample_capstone_data("./data/final/en_US/all/en_US.twitter.txt",
+                       file.path(sample_dir, "en_US.twitter.txt"),
+                       sample_len = sample_len,
+                       seed = seed)
+  sample_capstone_data("./data/final/en_US/all/en_US.blogs.txt",
+                       file.path(sample_dir, "en_US.blogs.txt"),
+                       sample_len = sample_len,
+                       seed=seed)
+  sample_capstone_data("./data/final/en_US/all/en_US.news.txt",
+                       file.path(sample_dir, "en_US.news.txt"),
+                       sample_len = sample_len,
+                       seed=seed)
 }
 
-load_sample_dircorpus <- function(sampledir="./data/final/en_US/sample.1.percent/", 
+load_sample_dircorpus <- function(sample_dir="./data/final/en_US/sample.1.percent/", 
                                   save_file=NULL) {
-  docs <- Corpus(DirSource(sampledir),
+  docs <- Corpus(DirSource(sample_dir),
                  readerControl = list(
                    language="en_US"
                  ))
@@ -53,14 +64,14 @@ newline_text_file_to_corpus <- function(filename) {
   t_corpus
 }
 
-load_sample_vec_corpus <- function(sampledir="./data/final/en_US/sample.1.percent/") {
+load_sample_vec_corpus <- function(sample_dir="./data/final/en_US/sample.1.percent/") {
 
   print("reading twitter")
-  tweets <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.twitter.txt"))
+  tweets <- newline_text_file_to_corpus(filename=file.path(sample_dir, "en_US.twitter.txt"))
   print("reading blogs")
-  blogs <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.blogs.txt"))
+  blogs <- newline_text_file_to_corpus(filename=file.path(sample_dir, "en_US.blogs.txt"))
   print("reading news")
-  news <- newline_text_file_to_corpus(filename=file.path(sampledir, "en_US.news.txt"))
+  news <- newline_text_file_to_corpus(filename=file.path(sample_dir, "en_US.news.txt"))
   print("Joining data")
   docs <- c(tweets, blogs, news)
 
