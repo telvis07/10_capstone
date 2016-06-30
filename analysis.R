@@ -125,14 +125,20 @@ get_docterm_matrix <- function(docs,
   
   print("Generating term frequencies")
   freq <- colSums(dtm)
+  print("Deleting doc term matrix")
+  rm(dtm)
+  
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.table(word=names(freq), freq=freq, keep.rownames=F)
+  print("deleting frequency list")
+  rm(freq)
   
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.
   # wf <- mutate(wf, word=as.character(word))
   wf[,word:=as.character(word)]
   setkey(wf, word)
+  setorder(wf, -freq)
   count_before <- nrow(wf)
   
   if (ngram_length > 1) {
@@ -155,7 +161,7 @@ get_docterm_matrix <- function(docs,
     if (! is.null(parent_words)){
       print("filtering for words not in parent db")
       # wf <- filter(wf, root %in% parent_words)
-      wf[wf$root %in% parent_words,]
+      wf <- wf[root %in% parent_words,]
       count_after <- nrow(wf)
       print(sprintf("parent db removed %s rows %s-grams. %s remain", count_before - count_after, 
                     ngram_length, count_after))

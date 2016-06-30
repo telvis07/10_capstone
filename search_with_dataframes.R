@@ -154,7 +154,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
       
       # Calculate the likelihood that this word follows the search phrase.
       # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
-      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,"freq"] 
+      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,freq] 
     }
   } 
   
