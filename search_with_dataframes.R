@@ -223,22 +223,24 @@ generate_queries_and_answers <- function(sample_dir = "./data/final/en_US/test_s
   queries <- c()
   answers <- c()
   
-  for (line in readLines(file.path(sample_dir, "en_US.twitter.txt"),  n=num_lines)) {
-    s <- removePunctuation(line)
-    s <- tolower(s)
-    s <- removeNumbers(s)
-    s <- stripWhitespace(s)
-    s <- stringi::stri_split_charclass(s, "\\p{WHITE_SPACE}")
-    s <- lapply(s, function(x) x <- x[which(x != "")])
-    s <- unlist(s)
-    
-    if (length(s) < 3)
-      next
-
-    query <- paste0(head(s, length(s)-1), collapse = " ")
-    answer <- tail(s, 1)
-    queries <- c(queries, query)
-    answers <- c(answers, answer)
+  for (fn in c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")){
+    for (line in readLines(file.path(sample_dir, fn),  n=num_lines)) {
+      s <- removePunctuation(line)
+      s <- tolower(s)
+      s <- removeNumbers(s)
+      s <- stripWhitespace(s)
+      s <- stringi::stri_split_charclass(s, "\\p{WHITE_SPACE}")
+      s <- lapply(s, function(x) x <- x[which(x != "")])
+      s <- unlist(s)
+      
+      if (length(s) < 3)
+        next
+  
+      query <- paste0(head(s, length(s)-1), collapse = " ")
+      answer <- tail(s, 1)
+      queries <- c(queries, query)
+      answers <- c(answers, answer)
+    }
   }
   
   data.frame(queries=queries, answers=answers, stringsAsFactors = F)
