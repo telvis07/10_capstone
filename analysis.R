@@ -115,7 +115,7 @@ do_system.time <- function(what, args){
 
 get_docterm_matrix <- function(docs, 
                                ngram_length=1, 
-                               parent_words=NULL, 
+                               parent_words=NULL,
                                prune_cover_percentage=0.60) {
   
   print(sprintf("get_docterm_matrix: %s-gram", ngram_length))
@@ -154,18 +154,16 @@ get_docterm_matrix <- function(docs,
     # filter by words in parent
     if (! is.null(parent_words)){
       print("filtering for words not in parent db")
-      wf <- filter(wf, root %in% parent_words)
+      # wf <- filter(wf, root %in% parent_words)
+      wf[wf$root %in% parent_words,]
       count_after <- nrow(wf)
       print(sprintf("parent db removed %s rows %s-grams. %s remain", count_before - count_after, 
                     ngram_length, count_after))
     }
-    
-    print("prune by cover percentage")
-    wf <- prune_ngram_df_by_cover_percentage(wf, prune_cover_percentage)
-    
-  } else {
-    wf <- filter(wf, freq>min_frequency)
   }
+  
+  print("prune by cover percentage")
+  wf <- prune_ngram_df_by_cover_percentage(wf, prune_cover_percentage)
   
   count_after <- nrow(wf)
   print(sprintf("Removed %s rows %-grams. Remaining: %s", count_before - count_after, ngram_length, count_after))
