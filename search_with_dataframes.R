@@ -63,7 +63,9 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
 }
 
 
-ngram_language_modeling_with_data_frames <- function(docs=NULL, doc_dir="./data/final/en_US/sample.1.percent/") {
+ngram_language_modeling_with_data_frames <- function(docs=NULL, 
+                                                     doc_dir="./data/final/en_US/sample.1.percent/",
+                                                     prune_cover_percentage=1.00) {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
   # the different words which follow that word history. As language models are predictive
@@ -99,7 +101,6 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL, doc_dir="./data/
                         "ngram_4"=ngram_4$wf)
 
   ngram_df_list
-  
 }
 
 perform_search_in_dataframe <- function(ngram_df_list, 
@@ -173,13 +174,13 @@ save_ngram_df_list <- function(ngram_df_list, save_file="data/ngram_df_list.25.p
   saveRDS(ngram_df_list, save_file)  
 }
 
-run_quiz_sentences <- function(ngram_df_list, quiz=T) {
+predict_test_data <- function(ngram_df_list, test_queries_df) {
   
-  if (quiz) {
-    test_queries_df <- generate_quiz_1_data()
-  } else {
-    test_queries_df <- generate_test_data()
-  }
+  # if (quiz) {
+  #   test_queries_df <- generate_quiz_1_data()
+  # } else {
+  #   test_queries_df <- generate_test_data()
+  # }
   
   queries <- test_queries_df$queries
   answers <- test_queries_df$answers
@@ -195,27 +196,30 @@ run_quiz_sentences <- function(ngram_df_list, quiz=T) {
     print(query)
     res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
     suggested_words <- res[1:3,]$word
-    
-    correct <- answers[i] %in% suggested_words
-    if (correct) {
-      num_correct <- num_correct + 1
-    } else {
-      missed_queries <- c(missed_queries, query)
-      correct_answers <- c(correct_answers, answers[i])
-      model_answers <- c(model_answers, paste(suggested_words, collapse=","))
-    }
-    print(sprintf("suggested_words: %s, Correct: :%s", paste(suggested_words, collapse=","), correct))
+    is_correct <- answers[i] %in% suggested_words
+    correct_answers <- c(correct_answers, is_correct)
+    model_answers <- c(model_answers, paste(suggested_words, collapse=","))
+ 
+    print(sprintf("suggested_words: %s, Correct: :%s", paste(suggested_words, collapse=","), is_correct))
     i <- i+1
     print("-----------")
     print(res)
   }
   print("************")
+  test_queries_df$correct <- correct_answers
+  test_queries_df$y_hat <- model_answers 
+  num_correct = sum(correct_answers)
   print(sprintf("Got %s of %s", num_correct, length(answers)))
-  data.frame(missed_queries=missed_queries, correct_answers=correct_answers, model_answers=model_answers)
+  
+  
+  test_summary <- list (
+                accuracy = num_correct/nrow(test_queries_df),
+                predictions = test_queries_df
+  )
 }
 
 
-generate_test_data <- function(sample_dir = "./data/final/en_US/test_sample", num_lines=25) {
+generate_queries_and_answers <- function(sample_dir = "./data/final/en_US/test_sample", num_lines=25) {
   queries <- c()
   answers <- c()
   
@@ -314,4 +318,6 @@ build_final_model <- function() {
   ngram_df_list <- readRDS("data/ngram_df_list.rds")
   run_quiz_sentences(ngram_df_list = ngram_df_list)
 }
+
+
 

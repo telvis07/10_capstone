@@ -26,7 +26,7 @@ generate_sample_files <- function(sample_dir = "./data/final/en_US/test_sample",
   
   # check for data zip
   if (!file.exists(sample_dir)){
-    print(sprintf("Creatiing dir: %s", sample_dir))
+    print(sprintf("Creating dir: %s", sample_dir))
     dir.create(sample_dir)
   }
   
