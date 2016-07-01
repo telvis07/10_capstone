@@ -238,9 +238,12 @@ hacking_with_quantenda <- function() {
 test_train_split <- function() {
   docs <- readRDS("data/quanteda_corpus_docs.rds")
   dt <- data.table(docs$documents)
+  # summary(quanteda::sample(corpus))
 
   write.table(dt, "data/final_model_csv/all.dt")
   smp_size <- floor(0.80 * nrow(dt))
+  set.seed(123)
+  inTrain <- sample(seq_len(nrow(dt)), size=smp_size)
   training <- dt[inTrain,]
   testing <- dt[-inTrain,]
   print(nrow(training) + nrow(testing))

@@ -223,11 +223,11 @@ predict_test_data <- function(ngram_df_list, test_queries_df) {
 }
 
 
-generate_queries_and_answers <- function(sample_dir = "./data/final/en_US/test_sample", num_lines=25) {
+generate_queries_and_answers <- function(files, num_lines=25) {
   queries <- c()
   answers <- c()
   
-  for (fn in c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")){
+  for (fn in files){
     for (line in readLines(file.path(sample_dir, fn),  n=num_lines)) {
       s <- removePunctuation(line)
       s <- tolower(s)
@@ -245,6 +245,42 @@ generate_queries_and_answers <- function(sample_dir = "./data/final/en_US/test_s
       queries <- c(queries, query)
       answers <- c(answers, answer)
     }
+  }
+  
+  data.frame(queries=queries, answers=answers, stringsAsFactors = F)
+}
+
+generate_queries_and_answers_from_csv <- function(csv_fn="data/final_model_csv/testing.csv",
+                                                  num_lines=25,
+                                                  seed=123) {
+  # queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", num_lines = -1)
+  # queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/training.csv", num_lines = -1)
+  queries <- c()
+  answers <- c()
+  texts <- read.csv(csv_fn, stringsAsFactors = F, nrows = num_lines)$text
+  if (num_lines > 0){
+    set.seed(seed)
+    ss <- sample(1:length(texts), num_lines, replace=F)
+    print(ss)
+    texts <- texts[ss]
+  }
+  
+  for (line in texts) {
+    s <- removePunctuation(line)
+    s <- tolower(s)
+    s <- removeNumbers(s)
+    s <- stripWhitespace(s)
+    s <- stringi::stri_split_charclass(s, "\\p{WHITE_SPACE}")
+    s <- lapply(s, function(x) x <- x[which(x != "")])
+    s <- unlist(s)
+    
+    if (length(s) < 3)
+      next
+    
+    query <- paste0(head(s, length(s)-1), collapse = " ")
+    answer <- tail(s, 1)
+    queries <- c(queries, query)
+    answers <- c(answers, answer)
   }
   
   data.frame(queries=queries, answers=answers, stringsAsFactors = F)
@@ -316,11 +352,21 @@ build_final_model <- function() {
   saveRDS(docs, "data/quanteda_corpus_docs.rds")
   # reinit()
   
-  docs <- readRDS("data/quanteda_corpus_docs.rds")
-  # TODO: test/train split?
+  # docs <- readRDS("data/quanteda_corpus_docs.rds")
+  # load the training data
+  docs <- textfile("data/final_model_csv/training.csv", textField="texts")
+  docs <- corpus(docs)
+  print(ndoc(docs))
+  
+  # train the model
   ngram_df_list <- ngram_language_modeling_with_data_frames(docs=docs)
   saveRDS(ngram_df_list, "data/ngram_df_list.rds")
   # reinit()
+  
+  test_data_queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", 
+                                                             num_lines = 25)
+  results <- predict_test_data(ngram_model, test_data_queries)
+
   
   ngram_df_list <- readRDS("data/ngram_df_list.rds")
   run_quiz_sentences(ngram_df_list = ngram_df_list)

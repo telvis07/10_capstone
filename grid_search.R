@@ -4,9 +4,10 @@ source("search_with_dataframes.R")
 grid_search <- function(seed=5678, sample_len=0.10) {
   # coverage_params <- seq(.10, 1.0, .1)
   # coverage_params <- seq(.60)
-  # coverage_params <- seq(.50, 1.0, .50)
-  coverage_params <- c(1.0)
-  num_iterations <- 1
+  coverage_params <- seq(.33, 1.0, .33)
+  # coverage_params <- c(1.0)
+  num_iterations <- 5
+  all_files <- c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")
 
   c_list <- c()
   test_accuracies <- c()
@@ -59,8 +60,10 @@ grid_search <- function(seed=5678, sample_len=0.10) {
                                                               prune_cover_percentage=prune_cover_percentage)
       
       # generate data from with queries and answers
-      train_data_queries <- generate_queries_and_answers(train_dir, num_lines=100)
-      test_data_queries <- generate_queries_and_answers(test_dir, num_lines=100) 
+      text_files <- sapply(all_files, file.path, train_dir)
+      train_data_queries <- generate_queries_and_answers(text_files, num_lines=100)
+      text_files <- sapply(all_files, file.path, test_dir)
+      test_data_queries <- generate_queries_and_answers(text_files, num_lines=100) 
       
       # predict on training data
       results <- predict_test_data(ngram_model, train_data_queries)
