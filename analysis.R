@@ -18,7 +18,7 @@ fetch_capstone_data <- function() {
   
   # check for data zip
   if (!file.exists(data_dir)){
-    print(sprintf("Creatiing dir: %s", data_dir))
+    print(sprintf("Creating dir: %s", data_dir))
     dir.create(data_dir)
   }
   
@@ -89,6 +89,7 @@ preprocess_entries <- function(docs) {
   
   options(mc.cores=1)
   
+  print("preprocessing entries")
   docs <- tm_map(docs, removePunctuation)  # *Removing punctuation:*  
   docs <- tm_map(docs, removeNumbers)     # *Removing numbers:* 
   docs <- tm_map(docs, content_transformer(tolower))   # *Converting to lowercase:* 
@@ -169,7 +170,9 @@ get_docterm_matrix <- function(docs,
   }
   
   print("prune by cover percentage")
-  wf <- prune_ngram_df_by_cover_percentage(wf, prune_cover_percentage)
+  if (prune_cover_percentage < 1.0) {
+    wf <- prune_ngram_df_by_cover_percentage(wf, prune_cover_percentage)
+  }
   
   count_after <- nrow(wf)
   print(sprintf("Removed %s rows %-grams. Remaining: %s", count_before - count_after, ngram_length, count_after))
@@ -186,7 +189,7 @@ get_docterm_matrix <- function(docs,
 prune_ngram_df_by_cover_percentage <- function(df, percentage) {
   # prune_ngram_df_by_cover_percentage(datums$df_ngram_4, "data/pruned_50p_term_doc_matrix_4_ngram_df.rds", .50)
   sums <- cumsum(df$freq)
-  cover <- which(sums > sum(df$freq) * percentage)[1]
+  cover <- which(sums >= sum(df$freq) * percentage)[1]
   print(sprintf("%s of %s (%s%%) cover %s%% of word instances", 
                 cover, 
                 nrow(df), 
@@ -230,5 +233,28 @@ hacking_with_quantenda <- function() {
   # https://github.com/kbenoit/quanteda/blob/master/R/ngrams.R
   # https://github.com/kbenoit/quanteda/issues/149
   # https://github.com/lmullen/tokenizers
+}
+
+test_train_split <- function() {
+  docs <- readRDS("data/quanteda_corpus_docs.rds")
+  dt <- data.table(docs$documents)
+
+  write.table(dt, "data/final_model_csv/all.dt")
+  smp_size <- floor(0.80 * nrow(dt))
+  training <- dt[inTrain,]
+  testing <- dt[-inTrain,]
+  print(nrow(training) + nrow(testing))
+  print(nrow(dt))
+  # [1] 4269678
+  
+  # write test/train split files to disk
+  write.csv(dt, "data/final_model_csv/all.csv", row.names=F)
+  write.csv(training, "data/final_model_csv/training.csv", row.names=F)
+  write.csv(testing, "data/final_model_csv/testing.csv", row.names=F)
+  
+  # build the quanteda corpus
+  docs <- textfile("data/final_model_csv/training.csv", textField="texts")
+  docs <- corpus(docs)
+  ndoc(docs)
 }
 

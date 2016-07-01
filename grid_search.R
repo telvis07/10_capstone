@@ -2,15 +2,18 @@ source("sample_data.R")
 source("search_with_dataframes.R")
 
 grid_search <- function(seed=5678, sample_len=0.10) {
-  coverage_params <- seq(.10, 1.0, .1)
+  # coverage_params <- seq(.10, 1.0, .1)
   # coverage_params <- seq(.60)
+  # coverage_params <- seq(.50, 1.0, .50)
+  coverage_params <- c(1.0)
+  num_iterations <- 1
 
   c_list <- c()
   test_accuracies <- c()
   train_accuracies <- c()
   set.seed(seed)
   
-  for (i in seq(5)) {
+  for (i in seq(num_iterations)) {
     train_dir <- sprintf("training/train.%s", i)
     test_dir <- sprintf("training/test.%s", i)
     print(train_dir)
@@ -33,10 +36,23 @@ grid_search <- function(seed=5678, sample_len=0.10) {
     docs <- corpus(docs)
     
     for (prune_cover_percentage in coverage_params) { 
+      
+      # TODO: revisit bootstrap sampling for grid search
       # ss <- sample(1:ndoc(docs), replace=T)
       # sampled_docs <- docs[ss]
       # names(sampled_docs) <- NULL
       # sampled_docs <- corpus(sampled_docs)
+      
+      # Examples:
+        
+      # # sampling from a corpus
+      # summary(sample(inaugCorpus, 5)) 
+      # summary(sample(inaugCorpus, 10, replace=TRUE))
+      # # sampling from a dfm
+      # myDfm <- dfm(inaugTexts[1:10], verbose = FALSE)
+      # sample(myDfm)[, 1:10]
+      # sample(myDfm, replace = TRUE)[, 1:10]
+      # sample(myDfm, what = "features")[1:10, ]
 
       # train the model
       ngram_model <- ngram_language_modeling_with_data_frames(docs=docs,
@@ -44,11 +60,12 @@ grid_search <- function(seed=5678, sample_len=0.10) {
       
       # generate data from with queries and answers
       train_data_queries <- generate_queries_and_answers(train_dir, num_lines=100)
-      test_data_queries <- generate_queries_and_answers(test_dir) 
+      test_data_queries <- generate_queries_and_answers(test_dir, num_lines=100) 
       
       # predict on training data
       results <- predict_test_data(ngram_model, train_data_queries)
       train_accuracies <- c(train_accuracies, results$accuracy)
+      print(sprintf(""))
       
       # predict on test data
       results <- predict_test_data(ngram_model, test_data_queries)
@@ -56,12 +73,14 @@ grid_search <- function(seed=5678, sample_len=0.10) {
       
       # 
       c_list <- c(c_list, prune_cover_percentage)
+      
+      # print progress after each session
+      res <- data.frame(prune_cover_percentage=c_list,
+                        train_accuracy=train_accuracies,
+                        test_accuracy=test_accuracies)
+      print(res)
     }
-    res <- data.frame(prune_cover_percentage=c_list,
-                      train_accuracy=train_accuracies,
-                      test_accuracy=test_accuracies)
-    print(res)
+
   }
-  
   res
 }

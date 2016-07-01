@@ -90,9 +90,12 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   }
   
   # ngram_1 <- get_docterm_matrix(docs, 1)
-  ngram_2 <- get_docterm_matrix(docs, 2)
-  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=ngram_2$wf$word)
-  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=ngram_3$wf$word)
+  ngram_2 <- get_docterm_matrix(docs, 2, 
+                                prune_cover_percentage=prune_cover_percentage)
+  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=ngram_2$wf$word,
+                                prune_cover_percentage=prune_cover_percentage)
+  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=ngram_3$wf$word,
+                                prune_cover_percentage=prune_cover_percentage)
 
   
   # Combine all the word frequency data.frames
@@ -146,6 +149,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
     if (debug){
       print(head(results))
     }
+    
     if (nrow(results) > 0){
       # the word path exists and there are words that follow
       
@@ -313,6 +317,7 @@ build_final_model <- function() {
   # reinit()
   
   docs <- readRDS("data/quanteda_corpus_docs.rds")
+  # TODO: test/train split?
   ngram_df_list <- ngram_language_modeling_with_data_frames(docs=docs)
   saveRDS(ngram_df_list, "data/ngram_df_list.rds")
   # reinit()
