@@ -412,10 +412,13 @@ build_ngram_4_partition <- function () {
   # iterate over batches
   for (offset in seq(1, ndoc(docs), batch_size)) {
     offset <- floor(offset)
-    print(sprintf("Batch %s:%s", offset, offset+batch_size))
+    end <- offset+batch_size
+    if (end > ndoc(docs)){
+      end <- ndoc(docs)
+    }
+    print(sprintf("***** Batch %s:%s *****", offset, end))
     
-    
-    docs_ss <- docs[seq(offset, offset+batch_size),]
+    docs_ss <- docs[seq(offset, end),]
     docs_ss <- corpus(docs_ss)
     print(sprintf("partition size: %s", ndoc(docs_ss)))
     
