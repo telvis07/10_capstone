@@ -127,12 +127,12 @@ get_docterm_matrix <- function(docs,
   print("Generating term frequencies")
   freq <- colSums(dtm)
   print("Deleting doc term matrix")
-  rm(dtm)
+  rm(dtm); gc()
   
   freq <- sort(freq, decreasing=TRUE)
   wf <- data.table(word=names(freq), freq=freq, keep.rownames=F)
   print("deleting frequency list")
-  rm(freq)
+  rm(freq); gc()
   
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.

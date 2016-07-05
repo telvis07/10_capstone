@@ -65,7 +65,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
 
 ngram_language_modeling_with_data_frames <- function(docs=NULL, 
                                                      doc_dir="./data/final/en_US/sample.1.percent/",
-                                                     prune_cover_percentage=1.00) {
+                                                     prune_cover_percentage=0.66) {
   # How these probabilities are estimated is a matter of great interest in the area of
   # language modeling. The most straightforward way is take a word history and count
   # the different words which follow that word history. As language models are predictive
@@ -91,19 +91,35 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   
   # ngram_1 <- get_docterm_matrix(docs, 1)
   ngram_2 <- get_docterm_matrix(docs, 2, 
+                                prune_cover_percentage=0.66)
+  print("writing data/ngram_df_list_ngram_2.csv")
+  write.table(ngram_2$wf, "data/ngram_df_list_ngram_2.csv")
+  parent_words <- ngram_2$wf$word
+  print("deleting ngram2")
+  rm(ngram_2); gc()
+  
+  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=parent_words,
                                 prune_cover_percentage=prune_cover_percentage)
-  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=ngram_2$wf$word,
+  print("writing data/ngram_df_list_ngram_3.csv")
+  write.table(ngram_3$wf, "data/ngram_df_list_ngram_3.csv")
+  parent_words <- ngram_3$wf$word
+  print("deleting ngram3")
+  rm(ngram_3); gc()
+  
+  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=parent_words,
                                 prune_cover_percentage=prune_cover_percentage)
-  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=ngram_3$wf$word,
-                                prune_cover_percentage=prune_cover_percentage)
+  print("writing data/ngram_df_list_ngram_4.csv")
+  write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.csv")
+  print("deleting ngram4")
+  rm(ngram_4); gc()
 
   
-  # Combine all the word frequency data.frames
-  ngram_df_list = list( "ngram_2"=ngram_2$wf, 
-                        "ngram_3"=ngram_3$wf,
-                        "ngram_4"=ngram_4$wf)
-
-  ngram_df_list
+  # # Combine all the word frequency data.frames
+  # ngram_df_list = list( "ngram_2"=ngram_2$wf, 
+  #                       "ngram_3"=ngram_3$wf,
+  #                       "ngram_4"=ngram_4$wf)
+  # 
+  # ngram_df_list
 }
 
 perform_search_in_dataframe <- function(ngram_df_list, 
@@ -359,8 +375,8 @@ build_final_model <- function() {
   print(ndoc(docs))
   
   # train the model
-  ngram_df_list <- ngram_language_modeling_with_data_frames(docs=docs)
-  saveRDS(ngram_df_list, "data/ngram_df_list.rds")
+  ngram_language_modeling_with_data_frames(docs=docs,prune_cover_percentage=0.66)
+  saveRDS(ngram_model, "data/ngram_model.rds")
   # reinit()
   
   test_data_queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", 
@@ -371,6 +387,144 @@ build_final_model <- function() {
   ngram_df_list <- readRDS("data/ngram_df_list.rds")
   run_quiz_sentences(ngram_df_list = ngram_df_list)
 }
+
+
+
+build_ngram_4_partition <- function () {
+  # train the 4-grams by partitioning into 10 batches
+  # ngram_4_merged <- build_ngram_4_partition()
+  
+  print("Loading docs")
+  docs <- textfile("data/final_model_csv/training.csv", textField="texts")
+  docs <- corpus(docs)
+  print(ndoc(docs))
+  
+  print("loading ngram3")
+  ngram_3 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_3.csv",
+                         stringsAsFactors = F)
+  parent_words <- ngram_3$word
+  
+  # start processing corpus in 10 batches
+  num_batches <- 10
+  batch_size <- floor(ndoc(docs) / num_batches)
+  ngram_4_merged <- NULL
+  
+  # iterate over batches
+  for (offset in seq(1, ndoc(docs), batch_size)) {
+    offset <- floor(offset)
+    print(sprintf("Batch %s:%s", offset, offset+batch_size))
+    
+    
+    docs_ss <- docs[seq(offset, offset+batch_size),]
+    docs_ss <- corpus(docs_ss)
+    print(sprintf("partition size: %s", ndoc(docs_ss)))
+    
+    # generate frequency data.table for 4-grams
+    # set cover percentage to 100% so we keep all the n-grams
+    ngram_4 <- get_docterm_matrix(docs_ss, 4, parent_words=parent_words,
+                                  prune_cover_percentage=1.00)
+    print("deleting docs_ss")
+    rm(docs_ss); gc()
+    if (is.null(ngram_4_merged)){
+      ngram_4_merged <- ngram_4$wf
+    } else {
+      print(sprintf("Merging: before %s", nrow(ngram_4_merged)))
+      ngram_4_all_merged <- merge(ngram_4_merged, ngram_4$wf, by="word", all=T)
+      print("merging freq")
+      ngram_4_all_merged$freq <- apply(ngram_4_all_merged[,list(freq.x, freq.y)], 
+                                       1,
+                                      function(x){
+                                        if (is.na(x[1])){ret <- x[2]}
+                                        else if (is.na(x[2])){ret <-x[1] }
+                                        else{ret <- sum(x)}
+                                        ret
+                                      })
+      print("merging root")
+      ngram_4_all_merged$root <- apply(ngram_4_all_merged[, list(root.x, root.y)],
+                                  1,
+                                  function(x){
+                                    if (is.na(x[1])){ret <- x[2]}
+                                    else {ret <- x[1]} 
+                                    ret
+                                  })
+      # head(ngram_4_all_merged[freq.x>0 & freq.y>0])
+      print("removing .x and .y")
+      ngram_4_all_merged <- ngram_4_all_merged[,freq.x:=NULL]
+      ngram_4_all_merged <- ngram_4_all_merged[,freq.y:=NULL]
+      ngram_4_all_merged <- ngram_4_all_merged[,root.x:=NULL]
+      ngram_4_all_merged <- ngram_4_all_merged[,root.y:=NULL]
+      
+      # sorting
+      print("sorting")
+      setkey(ngram_4_all_merged, word)
+      setorder(ngram_4_all_merged, -freq)
+      ngram_4_merged <- ngram_4_all_merged
+      print(sprintf("Merging: after %s", nrow(ngram_4_merged)))  
+      
+      print("removing ngram_4_all_merged")
+      rm(ngram_4_all_merged); gc()
+    }
+  }
+  
+  # ngram_4_merged <- prune_ngram_df_by_cover_percentage(ngram_4_merged, 
+  #                                                      prune_cover_percentage=0.66)
+  # write.table(ngram_4_merged, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
+  ngram_4_merged
+  
+  
+
+  # 
+  # 
+  # 
+  # print(sprintf("num parent words %s", length(parent_words)))
+  # ngram_4 <- get_docterm_matrix(docs, 4, parent_words=parent_words,
+  #                               prune_cover_percentage=0.66)
+  # print("writing data/ngram_df_list_ngram_4.csv")
+  # write.table(ngram_4$wf, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
+}
+
+
+ngram_4_merging_shenanigans <- function () {
+  
+  
+  # > head(ngram_4_all_merged[freq.x>0 & freq.y>0])
+  # word freq.x            root.x freq.y            root.y freq
+  # 1:      a acre site at      2       a acre site      1       a acre site    3
+  # 2: a advantage after a      2 a advantage after      1 a advantage after    3
+  # 3:        a all tie in      1         a all tie      1         a all tie    2
+  # 4:     a am phone call      1        a am phone      1        a am phone    2
+  # 5:          a and a to      1           a and a      1           a and a    2
+  # 6:        a as well as      2         a as well      1         a as well    3
+  # root
+  # 1:       a acre site
+  # 2: a advantage after
+  # 3:         a all tie
+  # 4:        a am phone
+  # 5:           a and a
+  # 6:         a as well
+}
+
+build_ngram_4 <- function () {
+  # This fails because get_docterm_matrix() fails for 4grams 
+  # on 100% of the corpus 
+  
+  print("Loading docs")
+  docs <- textfile("data/final_model_csv/training.csv", textField="texts")
+  docs <- corpus(docs)
+  print(ndoc(docs))
+  
+  print("loading ngram3")
+  ngram_3 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_3.csv", 
+                         stringsAsFactors = F)
+  parent_words <- ngram_3$word
+  print(sprintf("num parent words %s", length(parent_words)))
+  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=parent_words,
+                                prune_cover_percentage=0.66)
+  print("writing data/ngram_df_list_ngram_4.csv")
+  write.table(ngram_4$wf, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
+}
+
+
 
 
 
