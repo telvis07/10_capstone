@@ -236,6 +236,8 @@ predict_test_data <- function(ngram_df_list, test_queries_df) {
                 accuracy = num_correct/nrow(test_queries_df),
                 predictions = test_queries_df
   )
+  
+  test_summary
 }
 
 
@@ -340,9 +342,22 @@ store_datatables <- function(ngram_df_list) {
 }
 
 load_datatables <- function(){
-  ngram_2 <- read.table( "data/ngram_df_list_ngram_2.csv", stringsAsFactors = F)
-  ngram_3 <- read.table( "data/ngram_df_list_ngram_3.csv", stringsAsFactors = F)
-  ngram_4 <- read.table( "data/ngram_df_list_ngram_4.csv", stringsAsFactors = F)
+  
+  # http://www.inside-r.org/packages/cran/data.table/docs/fread
+  # fread()
+  # > object.size(ngram_model)
+  # 1542808816 bytes
+  # > class(ngram_model)
+  # [1] "list"
+  # > class(ngram_model$ngram_2)
+  # [1] "data.table" "data.frame"
+  # > class(ngram_model$ngram_3)
+  # [1] "data.table" "data.frame"
+  # > class(ngram_model$ngram_4)
+  # [1] "data.table" "data.frame"
+  ngram_2 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_2.csv", header=T, stringsAsFactors = F)
+  ngram_3 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_3.csv", header=T, stringsAsFactors = F)
+  ngram_4 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_4.csv", header=T, stringsAsFactors = F)
   
   # Combine all the word frequency data.frames
   ngram_df_list = list( "ngram_2"=ngram_2, 
@@ -385,7 +400,10 @@ build_final_model <- function() {
 
   
   ngram_df_list <- readRDS("data/ngram_df_list.rds")
-  run_quiz_sentences(ngram_df_list = ngram_df_list)
+  # run_quiz_sentences(ngram_df_list = ngram_df_list)
+  test_queries_df <- generate_quiz_1_data()
+  predict_test_data(ngram_df_list = ngram_model, test_queries_df)
+
 }
 
 
@@ -469,9 +487,9 @@ build_ngram_4_partition <- function () {
     }
   }
   
-  # ngram_4_merged <- prune_ngram_df_by_cover_percentage(ngram_4_merged, 
-  #                                                      prune_cover_percentage=0.66)
-  # write.table(ngram_4_merged, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
+  ngram_4_merged <- prune_ngram_df_by_cover_percentage(ngram_4_merged, 
+                                                       percentage=0.66)
+  write.table(ngram_4_merged, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
   ngram_4_merged
   
   
@@ -525,6 +543,18 @@ build_ngram_4 <- function () {
                                 prune_cover_percentage=0.66)
   print("writing data/ngram_df_list_ngram_4.csv")
   write.table(ngram_4$wf, "data/final_model_ngrams/ngram_df_list_ngram_4.csv")
+}
+
+run_test_data <- function () {
+  ngram_model <- load_datatables()
+  
+  queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", num_lines = 100)
+  test_summary <- predict_test_data(ngram_df_list = ngram_model, queries)
+  write.csv(test_summary, "test_queries.csv")
+  
+  queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/training.csv", num_lines = 100)
+  test_summary <- predict_test_data(ngram_df_list = ngram_model, queries)
+  write.csv(test_summary, "training_queries.csv")
 }
 
 
