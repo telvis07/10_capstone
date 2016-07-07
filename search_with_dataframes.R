@@ -21,6 +21,10 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
     # consider only doing backoff queries if the full phrase 
     # returns no results.
+    
+    # This backoff method is called: 'stupid backoff'
+    # 
+    
     search_words = tail(words, i)
     print(search_words)
     ret = perform_search_in_dataframe(ngram_df_list = ngram_df_list,
@@ -34,9 +38,9 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
       recommended_words = rbind(recommended_words, ret)
     }
     
-    # if (length(recommended_words) >= num_suggestions){
-    #   break
-    # }
+    if (length(recommended_words)){
+      break
+    }
   }
   
   if(nrow(recommended_words)) {
@@ -214,7 +218,7 @@ predict_test_data <- function(ngram_df_list, test_queries_df) {
   for (query in queries) {
     print("************")
     print(query)
-    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 10)
+    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 3)
     suggested_words <- res[1:3,]$word
     is_correct <- answers[i] %in% suggested_words
     correct_answers <- c(correct_answers, is_correct)
@@ -332,6 +336,36 @@ generate_quiz_1_data <- function() {
   )
   data.frame(queries=queries, answers=answers, stringsAsFactors = F)
 
+}
+
+generate_quiz_2_data <- function() {
+  queries <- c(
+    "When you breathe, I want to be the air for you. I'll be there for you, I'd live and I'd",
+    "Guy at my table's wife got up to go to the bathroom and I asked about dessert and he started telling me about his",
+    "I'd give anything to see arctic monkeys this",
+    "Talking to your mom has the same effect as a hug and helps reduce your",
+    "When you were in Holland you were like 1 inch away from me but you hadn't time to take a",
+    "I'd just like all of these questions answered, a presentation of evidence, and a jury to settle the",
+    "I can't deal with unsymetrical things. I can't even hold an uneven number of bags of groceries in each",
+    "Every inch of you is perfect from the bottom to the",
+    "I’m thankful my childhood was filled with imagination and bruises from playing",
+    "I like how the same people are in almost all of Adam Sandler's"
+  )
+  
+  answers <- c(
+    "die", # missed
+    "marital", # missed (quiz incorrect. tried: financial)
+    "weekend", # missed
+    "stress", # missed
+    "minute", # correct (quiz incorrect. tried: look, minute)
+    "matter", # correct (quiz incorrect. tried: case)
+    "hand", # missed
+    "top", # correct
+    "outside", # missed
+    "movies" # missed
+  )
+  data.frame(queries=queries, answers=answers, stringsAsFactors = F)
+  
 }
 
 
