@@ -79,10 +79,10 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   #                                                                               [Manning and Sch¨utze, 1999]):
   
   # dirs
-  # 1% : "./data/final/en_US/sample.1.percent"
-  # 25% : "./data/final/en_US/sample.25" 
-  # 100% : "./data/final/en_US/all"
-  # ngram_df_list <- ngram_language_modeling_with_data_frames(doc_dir = )
+  # 1% : doc_dir <- "./data/final/en_US/sample.1.percent"
+  # 25% : doc_dir <- "./data/final/en_US/sample.25" 
+  # 100% : doc_dir <- "./data/final/en_US/all"
+  # ngram_model <- ngram_language_modeling_with_data_frames(doc_dir = doc_dir)
   
   # generate_sample_files()
   if (is.null(docs)) {
@@ -93,31 +93,23 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
     docs <- corpus(docs)
   }
   
-  # ngram_1 <- get_docterm_matrix(docs, 1)
-  ngram_2 <- get_docterm_matrix(docs, 2, 
+  ngram_1 <- get_docterm_matrix(docs, 1)
+  ngram_2 <- get_docterm_matrix(docs, 2,
+                                n_minus_1_gram_model = ngram_1$wf,
                                 prune_cover_percentage=0.66)
   print("writing data/ngram_df_list_ngram_2.csv")
   write.table(ngram_2$wf, "data/ngram_df_list_ngram_2.csv")
-  parent_words <- ngram_2$wf$word
-  print("deleting ngram2")
-  rm(ngram_2); gc()
   
-  ngram_3 <- get_docterm_matrix(docs, 3, parent_words=parent_words,
+  ngram_3 <- get_docterm_matrix(docs, 3, n_minus_1_gram_model = ngram_2$wf,
                                 prune_cover_percentage=prune_cover_percentage)
   print("writing data/ngram_df_list_ngram_3.csv")
   write.table(ngram_3$wf, "data/ngram_df_list_ngram_3.csv")
-  parent_words <- ngram_3$wf$word
-  print("deleting ngram3")
-  rm(ngram_3); gc()
   
-  ngram_4 <- get_docterm_matrix(docs, 4, parent_words=parent_words,
+  ngram_4 <- get_docterm_matrix(docs, 4, n_minus_1_gram_model=ngram_3$wf,
                                 prune_cover_percentage=prune_cover_percentage)
   print("writing data/ngram_df_list_ngram_4.csv")
   write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.csv")
-  print("deleting ngram4")
-  rm(ngram_4); gc()
 
-  
   # # Combine all the word frequency data.frames
   # ngram_df_list = list( "ngram_2"=ngram_2$wf, 
   #                       "ngram_3"=ngram_3$wf,

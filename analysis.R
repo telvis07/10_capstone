@@ -116,8 +116,8 @@ do_system.time <- function(what, args){
 
 get_docterm_matrix <- function(docs, 
                                ngram_length=1, 
-                               parent_words=NULL,
-                               prune_cover_percentage=0.60) {
+                               n_minus_1_gram_model=NULL,
+                               prune_cover_percentage=0.66) {
   
   print(sprintf("get_docterm_matrix: %s-gram", ngram_length))
   
@@ -130,44 +130,51 @@ get_docterm_matrix <- function(docs,
   rm(dtm); gc()
   
   freq <- sort(freq, decreasing=TRUE)
-  wf <- data.table(word=names(freq), freq=freq, keep.rownames=F)
+  wf <- data.frame(word=names(freq), freq=freq)
   print("deleting frequency list")
   rm(freq); gc()
   
   # verify the class of 'word' is character instead of 'factor'
   # also remove the 'row.names' because it increases memory usage.
-  # wf <- mutate(wf, word=as.character(word))
-  wf[,word:=as.character(word)]
-  setkey(wf, word)
-  setorder(wf, -freq)
+  wf <- mutate(wf, word=as.character(word))
   count_before <- nrow(wf)
   
   if (ngram_length > 1) {
     # generate the root word
     print("generating root")
-    # wf$root <- sapply(wf$word, 
-    #                   function(x) {
-    #                     w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
-    #                     paste(w, collapse = " ")
-    #                   })
-    wf[,root:= {
-      sapply(wf$word, 
-             function(x) {
-               w <- unlist(strsplit(x, " "))[1:ngram_length-1]; 
-               paste(w, collapse = " ")
-             })
-    }]
+    wf$root <- sapply(wf$word,
+                      function(x) {
+                        w <- unlist(strsplit(x, " "))[1:ngram_length-1];
+                        paste(w, collapse = " ")
+                      })
+    # Maybe do this in a post-processing step, prior to writing the 
+    # model as a CSV to disk.
+    # print("removing root from word")
+    # wf$word <- sapply(wf$word, 
+    #                      function(x) {
+    #                        w <- unlist(strsplit(x, " ")); 
+    #                        tail(w,1)
+    #                      })
+
     
     # filter by words in parent
-    if (! is.null(parent_words)){
+    if (! is.null(n_minus_1_gram_model)){
       print("filtering for words not in parent db")
-      # wf <- filter(wf, root %in% parent_words)
-      wf <- wf[root %in% parent_words,]
+      wf <- merge(wf, 
+                  subset(n_minus_1_gram_model, select=c(word, freq)), 
+                  by.x="root", 
+                  by.y="word")
+      print(names(wf))
+      wf <- mutate(wf, prob=freq.x/freq.y, freq=freq.x)
+      wf <- subset(wf, select=c(word, root, prob, freq))
       count_after <- nrow(wf)
       print(sprintf("parent db removed %s rows %s-grams. %s remain", count_before - count_after, 
                     ngram_length, count_after))
     }
   }
+  
+  
+  wf <- wf[order(wf$freq, decreasing = T),]
   
   print("prune by cover percentage")
   if (prune_cover_percentage < 1.0) {
