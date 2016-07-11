@@ -98,7 +98,7 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   ngram_1 <- get_docterm_matrix(docs, 1)
   ngram_2 <- get_docterm_matrix(docs, 2,
                                 n_minus_1_gram_model = ngram_1$wf,
-                                prune_cover_percentage=0.66)
+                                prune_cover_percentage=prune_cover_percentage)
   print("writing data/ngram_df_list_ngram_2.csv")
   write.table(ngram_2$wf, "data/ngram_df_list_ngram_2.csv")
   
@@ -112,11 +112,11 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   print("writing data/ngram_df_list_ngram_4.csv")
   write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.csv")
   
-  ngram_2 <- compress_ngram_model_words(ngram_2)
+  ngram_2$wf <- compress_ngram_model_words(ngram_2$wf)
   write.table(ngram_2$wf, "data/ngram_df_list_ngram_2.compressed.csv")
-  ngram_3 <- compress_ngram_model_words(ngram_3)
+  ngram_3$wf <- compress_ngram_model_words(ngram_3$wf)
   write.table(ngram_3$wf, "data/ngram_df_list_ngram_3.compressed.csv")
-  ngram_4 <- compress_ngram_model_words(ngram_4)
+  ngram_4$wf <- compress_ngram_model_words(ngram_4$wf)
   write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.compressed.csv")
 
 
