@@ -392,29 +392,16 @@ generate_quiz_2_data <- function() {
 }
 
 
-store_datatables <- function(ngram_df_list) {
-  write.table(ngram_df_list$ngram_2, "data/ngram_df_list_ngram_2.csv")
-  write.table(ngram_df_list$ngram_3, "data/ngram_df_list_ngram_3.csv")
-  write.table(ngram_df_list$ngram_4, "data/ngram_df_list_ngram_4.csv")
+store_prod_models <- function(ngram_df_list) {
+  write.table(ngram_df_list$ngram_2, "models/ngram_df_list_ngram_2.csv")
+  write.table(ngram_df_list$ngram_3, "models/ngram_df_list_ngram_3.csv")
+  write.table(ngram_df_list$ngram_4, "models/ngram_df_list_ngram_4.csv")
 }
 
 load_datatables <- function(){
-  
-  # http://www.inside-r.org/packages/cran/data.table/docs/fread
-  # fread()
-  # > object.size(ngram_df_list)
-  # 1542808816 bytes
-  # > class(ngram_df_list)
-  # [1] "list"
-  # > class(ngram_df_list$ngram_2)
-  # [1] "data.table" "data.frame"
-  # > class(ngram_df_list$ngram_3)
-  # [1] "data.table" "data.frame"
-  # > class(ngram_df_list$ngram_4)
-  # [1] "data.table" "data.frame"
-  ngram_2 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_2.csv", header=T, stringsAsFactors = F)
-  ngram_3 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_3.csv", header=T, stringsAsFactors = F)
-  ngram_4 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_4.csv", header=T, stringsAsFactors = F)
+  ngram_2 <- read.table("models/ngram_df_list_ngram_2.csv", header=T, stringsAsFactors = F)
+  ngram_3 <- read.table("models/ngram_df_list_ngram_3.csv", header=T, stringsAsFactors = F)
+  ngram_4 <- read.table("models/ngram_df_list_ngram_4.csv", header=T, stringsAsFactors = F)
   
   # Combine all the word frequency data.frames
   ngram_df_list = list( "ngram_2"=ngram_2, 
