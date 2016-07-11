@@ -147,14 +147,6 @@ get_docterm_matrix <- function(docs,
                         w <- unlist(strsplit(x, " "))[1:ngram_length-1];
                         paste(w, collapse = " ")
                       })
-    # Maybe do this in a post-processing step, prior to writing the 
-    # model as a CSV to disk.
-    # print("removing root from word")
-    # wf$word <- sapply(wf$word, 
-    #                      function(x) {
-    #                        w <- unlist(strsplit(x, " ")); 
-    #                        tail(w,1)
-    #                      })
 
     
     # filter by words in parent

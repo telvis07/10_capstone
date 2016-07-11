@@ -5,7 +5,7 @@ library(quanteda)
 
 multi_search_tree_with_data_frames <- function(ngram_df_list, 
                                                raw_phrase, 
-                                               num_suggestions=3, 
+                                               num_suggestions=5, 
                                                debug=FALSE){
   phrase <- preprocess_single_string(raw_phrase)
   print(phrase)
@@ -17,7 +17,7 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
   num_grams <- min(length(ngram_df_list), length(words))
 
   # for (i in seq_along(words)) {
-  for (i in seq(num_grams, 2, -1)){
+  for (i in seq(num_grams, 1, -1)){
     # https://en.wikipedia.org/wiki/Katz%27s_back-off_model
     # consider only doing backoff queries if the full phrase 
     # returns no results.
@@ -32,7 +32,8 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
                                       num_suggestions = num_suggestions,
                                       debug=F)
     
-    ret <- filter(ret, ! word %in% stopwords("english"))
+    # this should be done in : compress_ngram_model_words()
+    # ret <- filter(ret, ! word %in% stopwords("english"))
 
     if(nrow(ret)) {
       recommended_words = rbind(recommended_words, ret)
@@ -46,7 +47,8 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
   if(nrow(recommended_words)) {
     # MLE - maximum likelihood estimate
     max_range = min(num_suggestions, nrow(recommended_words))
-    ord = order(recommended_words$likelihood, decreasing = TRUE)
+    # prob = likelihood
+    ord = order(recommended_words$prob, decreasing = TRUE)
     recommended_words$word <- sapply(recommended_words$word, 
                                      function(x) {
                                        w <- unlist(strsplit(x, " ")); 
@@ -82,7 +84,7 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
   # 1% : doc_dir <- "./data/final/en_US/sample.1.percent"
   # 25% : doc_dir <- "./data/final/en_US/sample.25" 
   # 100% : doc_dir <- "./data/final/en_US/all"
-  # ngram_model <- ngram_language_modeling_with_data_frames(doc_dir = doc_dir)
+  # ngram_df_list <- ngram_language_modeling_with_data_frames(doc_dir = doc_dir)
   
   # generate_sample_files()
   if (is.null(docs)) {
@@ -109,13 +111,38 @@ ngram_language_modeling_with_data_frames <- function(docs=NULL,
                                 prune_cover_percentage=prune_cover_percentage)
   print("writing data/ngram_df_list_ngram_4.csv")
   write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.csv")
+  
+  ngram_2 <- compress_ngram_model_words(ngram_2)
+  write.table(ngram_2$wf, "data/ngram_df_list_ngram_2.compressed.csv")
+  ngram_3 <- compress_ngram_model_words(ngram_3)
+  write.table(ngram_3$wf, "data/ngram_df_list_ngram_3.compressed.csv")
+  ngram_4 <- compress_ngram_model_words(ngram_4)
+  write.table(ngram_4$wf, "data/ngram_df_list_ngram_4.compressed.csv")
 
-  # # Combine all the word frequency data.frames
-  # ngram_df_list = list( "ngram_2"=ngram_2$wf, 
-  #                       "ngram_3"=ngram_3$wf,
-  #                       "ngram_4"=ngram_4$wf)
-  # 
-  # ngram_df_list
+
+  # Combine all the word frequency data.frames
+  ngram_df_list = list( "ngram_2"=ngram_2$wf,
+                        "ngram_3"=ngram_3$wf,
+                        "ngram_4"=ngram_4$wf)
+
+  ngram_df_list
+}
+
+compress_ngram_model_words <- function(ngram_model) {
+  
+  # Maybe do this in a post-processing step, prior to writing the
+  # model as a CSV to disk.
+  print("removing root from word")
+  ngram_model$word <- sapply(ngram_model$word,
+                       function(x) {
+                         w <- unlist(strsplit(x, " "));
+                         tail(w,1)
+                       })
+  
+  print("removing where word=='stopword'")
+  ngram_model <- filter(ngram_model, ! word %in% stopwords("english"))
+  ngram_model <- ngram_model[order(ngram_model$freq, decreasing=T),]
+  ngram_model
 }
 
 perform_search_in_dataframe <- function(ngram_df_list, 
@@ -129,17 +156,18 @@ perform_search_in_dataframe <- function(ngram_df_list,
   
   # finds all words with
   gram_length <- length(words)
-  root_ngram_index <- gram_length - 1
+  # root_ngram_index <- gram_length - 1
   next_ngram_index <- gram_length
   
-  ngram_df <- ngram_df_list[[root_ngram_index]]
-  root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
-  if (debug){
-    print("root")
-    print(root_ngram_df)
-  }
+  # ngram_df <- ngram_df_list[[root_ngram_index]]
+  # root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
+  # if (debug){
+  #   print("root")
+  #   print(root_ngram_df)
+  # }
   
-  if (nrow(root_ngram_df) > 0){
+  # if (nrow(root_ngram_df) > 0)
+  {
     # there is a word path in the tree corresponding to the search phrase
     next_ngram_df <- ngram_df_list[[next_ngram_index]]
     search_text <- paste0("^", joined_words, " ")
@@ -148,14 +176,14 @@ perform_search_in_dataframe <- function(ngram_df_list,
     }
     
     # results <- filter(next_ngram_df, grepl(search_text, word))
-    results <- filter(next_ngram_df, root==root_ngram_df$word)
+    results <- filter(next_ngram_df, root==joined_words)
     results$word <- sapply(results$word, 
                            function(x) {
                              w <- unlist(strsplit(x, " ")); 
                              tail(w,1)
                            })
     results <- filter(results, ! word %in% stopwords("english"))
-    results <- results[order(results$freq, decreasing=T),]
+    results <- results[order(results$prob, decreasing=T),]
     
 
     if (debug){
@@ -171,7 +199,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
       
       # Calculate the likelihood that this word follows the search phrase.
       # print(order(sapply(results[2,], as.numeric), decreasing = TRUE))
-      recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,]$freq 
+      # recommended_words$likelihood <- recommended_words$freq/root_ngram_df[1,]$freq 
     }
   } 
   
@@ -190,7 +218,9 @@ save_ngram_df_list <- function(ngram_df_list, save_file="data/ngram_df_list.25.p
   saveRDS(ngram_df_list, save_file)  
 }
 
-predict_test_data <- function(ngram_df_list, test_queries_df) {
+predict_test_data <- function(ngram_df_list, 
+                              test_queries_df,
+                              num_suggestions = 5) {
   
   # if (quiz) {
   #   test_queries_df <- generate_quiz_1_data()
@@ -210,8 +240,9 @@ predict_test_data <- function(ngram_df_list, test_queries_df) {
   for (query in queries) {
     print("************")
     print(query)
-    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = 3)
-    suggested_words <- res[1:3,]$word
+    res <- multi_search_tree_with_data_frames(ngram_df_list, query, num_suggestions = num_suggestions)
+    num_suggestions <- min(nrow(res), num_suggestions)
+    suggested_words <- res[1:num_suggestions,]$word
     is_correct <- answers[i] %in% suggested_words
     correct_answers <- c(correct_answers, is_correct)
     model_answers <- c(model_answers, paste(suggested_words, collapse=","))
@@ -371,15 +402,15 @@ load_datatables <- function(){
   
   # http://www.inside-r.org/packages/cran/data.table/docs/fread
   # fread()
-  # > object.size(ngram_model)
+  # > object.size(ngram_df_list)
   # 1542808816 bytes
-  # > class(ngram_model)
+  # > class(ngram_df_list)
   # [1] "list"
-  # > class(ngram_model$ngram_2)
+  # > class(ngram_df_list$ngram_2)
   # [1] "data.table" "data.frame"
-  # > class(ngram_model$ngram_3)
+  # > class(ngram_df_list$ngram_3)
   # [1] "data.table" "data.frame"
-  # > class(ngram_model$ngram_4)
+  # > class(ngram_df_list$ngram_4)
   # [1] "data.table" "data.frame"
   ngram_2 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_2.csv", header=T, stringsAsFactors = F)
   ngram_3 <- read.table( "data/final_model_ngrams/ngram_df_list_ngram_3.csv", header=T, stringsAsFactors = F)
@@ -417,18 +448,18 @@ build_final_model <- function() {
   
   # train the model
   ngram_language_modeling_with_data_frames(docs=docs,prune_cover_percentage=0.66)
-  saveRDS(ngram_model, "data/ngram_model.rds")
+  saveRDS(ngram_df_list, "data/ngram_df_list.rds")
   # reinit()
   
   test_data_queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", 
                                                              num_lines = 25)
-  results <- predict_test_data(ngram_model, test_data_queries)
+  results <- predict_test_data(ngram_df_list, test_data_queries)
 
   
   ngram_df_list <- readRDS("data/ngram_df_list.rds")
   # run_quiz_sentences(ngram_df_list = ngram_df_list)
   test_queries_df <- generate_quiz_1_data()
-  predict_test_data(ngram_df_list = ngram_model, test_queries_df)
+  predict_test_data(ngram_df_list = ngram_df_list, test_queries_df)
 
 }
 
@@ -572,15 +603,20 @@ build_ngram_4 <- function () {
 }
 
 run_test_data <- function () {
-  ngram_model <- load_datatables()
+  ngram_df_list <- load_datatables()
   
   queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/testing.csv", num_lines = 100)
-  test_summary <- predict_test_data(ngram_df_list = ngram_model, queries)
+  test_summary <- predict_test_data(ngram_df_list = ngram_df_list, queries)
   write.csv(test_summary, "test_queries.csv")
   
   queries <- generate_queries_and_answers_from_csv(csv_fn="data/final_model_csv/training.csv", num_lines = 100)
-  test_summary <- predict_test_data(ngram_df_list = ngram_model, queries)
+  test_summary <- predict_test_data(ngram_df_list = ngram_df_list, queries)
   write.csv(test_summary, "training_queries.csv")
+}
+
+run_quiz_1_data <- function(ngram_df_list) {
+  test_queries_df <- generate_quiz_1_data()
+  predict_test_data(ngram_df_list = ngram_df_list, test_queries_df)
 }
 
 
