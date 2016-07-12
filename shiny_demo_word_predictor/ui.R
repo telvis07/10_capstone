@@ -3,6 +3,9 @@ library(shiny)
 # TODO: Add HELP tab that describes the application
 # TODO: Add number of recommended words
 # TODO: make accuracy vs time slider. More accuracy, increases latency
+# TODO: http://shiny.rstudio.com/articles/layout-guide.html
+#     : add "append text buttons"
+# TODO: App loading time
 
 shinyUI(
   pageWithSidebar(
