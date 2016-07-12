@@ -49,11 +49,11 @@ multi_search_tree_with_data_frames <- function(ngram_df_list,
     max_range = min(num_suggestions, nrow(recommended_words))
     # prob = likelihood
     ord = order(recommended_words$prob, decreasing = TRUE)
-    recommended_words$word <- sapply(recommended_words$word, 
-                                     function(x) {
-                                       w <- unlist(strsplit(x, " ")); 
-                                       tail(w,1)
-                                     })
+    # recommended_words$word <- sapply(recommended_words$word, 
+    #                                  function(x) {
+    #                                    w <- unlist(strsplit(x, " ")); 
+    #                                    tail(w,1)
+    #                                  })
     
     
     # print recommended words
@@ -398,7 +398,7 @@ store_prod_models <- function(ngram_df_list) {
   write.table(ngram_df_list$ngram_4, "models/ngram_df_list_ngram_4.csv")
 }
 
-load_datatables <- function(){
+load_datatables <- function() {
   ngram_2 <- read.table("models/ngram_df_list_ngram_2.csv", header=T, stringsAsFactors = F)
   ngram_3 <- read.table("models/ngram_df_list_ngram_3.csv", header=T, stringsAsFactors = F)
   ngram_4 <- read.table("models/ngram_df_list_ngram_4.csv", header=T, stringsAsFactors = F)
