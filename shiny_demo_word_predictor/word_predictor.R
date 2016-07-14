@@ -1,13 +1,21 @@
 # Word Predictor for demo
+library(tm)
 
+preprocess_single_string <- function(s) {
+  s <- removePunctuation(s)
+  s <- removeNumbers(s)
+  s <- tolower(s)
+  s <- stripWhitespace(s)
+  s
+}
 
 word_model_predict_query <- function(raw_phrase, 
                                      num_suggestions=3, 
                                      debug=FALSE){
-
+    null_predictions <- c("the", "to",  "and")
     
     if (nchar(raw_phrase)<2){
-      recommended_words <- c("the", "to",  "and")
+      recommended_words <- null_predictions
     } else {
       phrase <- preprocess_single_string(raw_phrase)
       
@@ -58,8 +66,13 @@ word_model_predict_query <- function(raw_phrase,
         # prob = likelihood
         ord = order(recommended_words$prob, decreasing = TRUE)
         recommended_words <- recommended_words[ord,]$word
+        
+        # war crimes
+        if (length(recommended_words) < num_suggestions) {
+          recommended_words <- c(recommended_words, null_predictions)[1:3]
+        }
       } else {
-        recommended_words <- c("the", "to",  "and")
+        recommended_words <- null_predictions
       }
     }
     

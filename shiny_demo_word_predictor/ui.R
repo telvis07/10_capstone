@@ -11,14 +11,18 @@ shinyUI(
   pageWithSidebar(
     headerPanel("Word Predictor Shiny Demo"),
     sidebarPanel(
-      textInput(inputId="query", label="Enter Text"),
-      actionButton("predict", label="Predict next word")
+      textInput(inputId="query", label="Enter Text", value="This class is ...")
+      # actionButton("predict", label="Predict next word")
     ),
     mainPanel(
       p('Query Sentence'),
       verbatimTextOutput('query'),
-      p('Recommended Next Words'),
-      verbatimTextOutput('recommendations')
+      p('Most likely next word'),
+      verbatimTextOutput('recommendation_1'),
+      p('Second Most likely next word'),
+      verbatimTextOutput('recommendation_2'),
+      p('Third Most likely next word'),
+      verbatimTextOutput('recommendation_3')
     )
   )
 )

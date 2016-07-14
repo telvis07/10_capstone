@@ -8,6 +8,8 @@ shinyServer(
     })
     
     output$query <- renderPrint({input$query})
-    output$recommendations <- renderPrint({next_word_model.predict()})
+    output$recommendation_1 <- renderText({next_word_model.predict()[1]})
+    output$recommendation_2 <- renderText({next_word_model.predict()[2]})
+    output$recommendation_3 <- renderText({next_word_model.predict()[3]})
   }
 )
