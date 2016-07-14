@@ -1,5 +1,6 @@
 # Word Predictor for demo
 library(tm)
+library(dplyr)
 
 preprocess_single_string <- function(s) {
   s <- removePunctuation(s)
@@ -11,7 +12,7 @@ preprocess_single_string <- function(s) {
 
 word_model_predict_query <- function(raw_phrase, 
                                      num_suggestions=3, 
-                                     debug=FALSE){
+                                     debug=F){
     null_predictions <- c("the", "to",  "and")
     
     if (nchar(raw_phrase)<2){
@@ -78,7 +79,6 @@ word_model_predict_query <- function(raw_phrase,
     
     recommended_words
 }
-
 perform_search_in_dataframe <- function(ngram_df_list, 
                                         words, 
                                         num_suggestions = 5, 
@@ -86,10 +86,19 @@ perform_search_in_dataframe <- function(ngram_df_list,
                                         debug=FALSE) {
   recommended_words = data.frame()
   joined_words <- paste(words, collapse = " ")
-
+  print(sprintf("joined words: %s", joined_words))
+  
   # finds all words with
   gram_length <- length(words)
+  # root_ngram_index <- gram_length - 1
   next_ngram_index <- gram_length
+  
+  # ngram_df <- ngram_df_list[[root_ngram_index]]
+  # root_ngram_df <- ngram_df[ngram_df$word == joined_words & ngram_df$freq > min_frequency,]
+  # if (debug){
+  #   print("root")
+  #   print(root_ngram_df)
+  # }
   
   # if (nrow(root_ngram_df) > 0)
   {
@@ -128,7 +137,7 @@ perform_search_in_dataframe <- function(ngram_df_list,
     }
   } 
   
-  if (nrow(recommended_words) == 0 && debug) {
+  if (nrow(recommended_words) == 0) {
     print(sprintf("No suggestions for word after: '%s'", paste(words, collapse=" ")))
   }
   

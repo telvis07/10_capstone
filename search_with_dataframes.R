@@ -2,6 +2,7 @@
 source("analysis.R")
 source("sample_data.R")
 library(quanteda)
+library(dplyr)
 
 multi_search_tree_with_data_frames <- function(ngram_df_list, 
                                                raw_phrase, 
