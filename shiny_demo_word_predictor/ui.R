@@ -11,16 +11,14 @@ shinyUI(
   pageWithSidebar(
     headerPanel("Word Predictor Shiny Demo"),
     sidebarPanel(
-      textInput(inputId="query", label="Enter Text", value="This class is ..."),
 
-      br(),
       helpText("Help:"),
-      helpText("Please type a sentence into the input box above. The word predictions will appear on the
+      helpText("Please type a sentence into the input box. The word predictions will appear on the
                right.", style = "color:purple"),
       br(),
       helpText("Note:"),
       helpText("The app must initialize when it first opens. 
-               After 100% loading, you will see the prediction 
+               When intialization completes, you will see the predictions
                for the default sentence example \"This class is ...\"
                on the right side. "),
       br(),
@@ -33,6 +31,9 @@ shinyUI(
     mainPanel(
       tabsetPanel(type = "tabs",
         tabPanel("Prediction",
+                 br(),
+                 textInput(inputId="query", label="Enter Text", value="This class is ...", width='100%'),
+                 
                  br(),
                  p('You entered the following text.'),
                  verbatimTextOutput('query'),
