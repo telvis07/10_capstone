@@ -26,9 +26,9 @@ In a nutshell, here's a summary of the data analysis performed in this report.
 1. Load the raw data.
 2. Extract a 1% sample of the data.
 3. Preprocess the data to remove stopwords, convert to lowercase and other tasks
-4. Generate 2-grams, 3-grams and 4-grams.
-5. Build a n-gram language model using a suffix tree
-6. Predict the next word by calculating the maximum likelihood estimate (MLE) for all suffixes for a search string.
+4. Generate 2-grams, 3-grams and 4-grams models
+5. Calculate the maximum likelihood estimate (MLE)
+6. Predict the next word by calculating the  for all suffixes for a search string.
 
 
 ```{r, echo=FALSE,message=FALSE}
