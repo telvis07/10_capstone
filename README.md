@@ -7,6 +7,8 @@ Final project for the Data Science Specialization Capstone Course
 - [Presentation Slides](https://telvis07.github.io/slides_demo_word_predictor/)
 - [Slides source](https://github.com/telvis07/slides_demo_word_predictor/tree/gh-pages)
 - [1st Milestone Report](http://rpubs.com/telvis/capstone_report_1)
+- [Link to raw data](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip)
+- [Link to ngram models with MLE probabilities](https://github.com/telvis07/shiny_demo_word_predictor/tree/master/models)
 
 
 ## Files
